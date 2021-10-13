@@ -4,18 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-def array_intersection(a, b):
-    """Returns a boolean array of where b array's elements appear in the a array"""
-    # Source: https://stackoverflow.com/questions/8317022/get-intersecting-rows-across-two-2d-numpy-arrays
-    if not isinstance(a, np.ndarray):
-        a = np.array(a)
-    if not isinstance(b, np.ndarray):
-        b = np.array(b)
-    tmp = np.prod(np.swapaxes(a[:, :, None], 1, 2) == b, axis=2)
-    return np.sum(np.cumsum(tmp, axis=0) * tmp == 1, axis=1).astype(bool)
-
-
-
+# WIP
 def get_area(points):
     """Returns the area of a polygon given the vertices.
     Parameters:
@@ -32,7 +21,7 @@ def get_area(points):
     return np.abs(area)
 
 
-def get_dual_points(mesh, compliant_cells, index):
+def get_dual_points(compliant_cells, index):
     """Returns the points of the dual mesh nearest to the point in the mesh given by the index.
     Parameters:
         mesh:       meshio.Mesh object
@@ -40,9 +29,7 @@ def get_dual_points(mesh, compliant_cells, index):
         index:      int
             Index of the point in the input mesh for which to calculate the nearest points of the dual mesh.
     """
-    ## For each type of cell do the following
     # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
-    _idxs = [np.where(x[1] == index)[0] for x in mesh.cells]
 # building the compliant cells list
     _compliant = []
     for i in range(len(compliant_cells)):
@@ -51,27 +38,8 @@ def get_dual_points(mesh, compliant_cells, index):
         _compliant.append(i) 
 #    	_compliant. = [np.where(x == index)[0] for x,i in enumerate(compliant_cells)]
     # Find the centers of all the cells
-    _vs = [mesh.points[x[1][_idxs[i]]].mean(axis=1) for i,x in enumerate(mesh.cells)]
-    return np.concatenate(_vs, axis=0), _compliant
+    return  _compliant
 
-#def get_neigh(compliant_cells, analyded_node, id2D):
-#    """Returns the points of the dual mesh nearest to the point in the mesh given by the index.
-#    Parameters:
-#        mesh:       meshio.Mesh object
-#            Input mesh.
-#        index:      int
-#            Index of the point in the input mesh for which to calculate the nearest points of the dual mesh.
-#    """
-#    assert isinstance(mesh, meshio.Mesh)
-#    ## For each type of cell do the following
-#    # Find the cells where the given index appears
-#    # Find the centers of all the cells    
-#    for x in compliant_cells:
-#	for i in range(len(x)):
-#		for j in range(len(analysed_node))
-#    			if (len(np.where(mesh.cells[1][i] ==  analysed_node[1][j])[0])>=2):
-#                           neigh = np.concatenate(x, axis=0)
-#    return neigh
 
 def get_dual(mesh,  order=False):
     """Returns the dual mesh held in a dictionary with dual["points"] giving the coordinates and
@@ -103,17 +71,15 @@ def get_dual(mesh,  order=False):
     # create a dictionary for the graph
     graph ={}
     # Get the first set of points of the dual mesh
-    new_points, compliant_cells = get_dual_points(mesh, alpha, 0)    
-    # Create the containers for the points and the polygons of the dual mesh
-    dual_points = new_points
-    # define a new key of the dictionary for each cell of the mesh
+    compliant_cells = get_dual_points(alpha, 0)    
+   # define a new key of the dictionary for each cell of the mesh
     graph={}
     for i in range(len(alpha)):
      graph.update({i :[]})
     # cycle on the points
     for idx in range(1, len(mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        new_points, compliant_cells = get_dual_points(mesh, alpha, idx)
+        compliant_cells = get_dual_points(alpha, idx)
         print(compliant_cells)
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
@@ -131,17 +97,39 @@ def get_dual(mesh,  order=False):
     # Define the boundary cells in a similar way we did for the graph
     bnd = []       
     for i in range(len(alpha)):
+    # We cycle on the boundary cells marked
         for j in beta:
            inter = list(set(alpha[i]).intersection(j))
            if ((len(inter)>=2) and (i not in bnd)):
              bnd.append(i) 
     print(bnd)        
+    # definition of the graph from the dictionary as sugegsted by networkx
     g = nx.Graph(graph)
+    # initialization of the figure
     plt.figure()
+    # centerpoints of each element definition and initialization
+    cp=[]
+    x_centerpoint=0
+    y_centerpoint=0
+    # cycle on the elements
     for elemento in alpha:
+      # cycle on the point of the elements
       for i in range(len(elemento)):
+       # plot the grid
        x_value = [mesh.points[elemento[i-1],0],mesh.points[elemento[i],0]]
        y_value = [mesh.points[elemento[i-1],1],mesh.points[elemento[i],1]]
        plt.plot(x_value,y_value)  
-    nx.draw(g, with_labels=True)
+       # compute the centerpoint (accumulating)
+       x_centerpoint += mesh.points[elemento[i],0]
+       y_centerpoint += mesh.points[elemento[i],1]
+      # define the center point
+      x_centerpoint/=len(elemento)
+      y_centerpoint/=len(elemento)
+      # append to the centerpoints vector the element computed
+      cp.append([x_centerpoint,y_centerpoint])
+      # re-initialize the accumulation vectors
+      x_centerpoint=0
+      y_centerpoint=0
+    # draw the adjacency graph
+    nx.draw(g,pos=cp, with_labels=True)
     plt.savefig('foo.png')
