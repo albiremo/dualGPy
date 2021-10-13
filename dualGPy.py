@@ -30,16 +30,41 @@ def get_dual_points(compliant_cells, index):
             Index of the point in the input mesh for which to calculate the nearest points of the dual mesh.
     """
     # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
-# building the compliant cells list
+    # building the compliant cells list
     _compliant = []
     for i in range(len(compliant_cells)):
-# compress with the use of any to determine the compliant cells
+    # compress with the use of any to determine the compliant cells
       if any(compliant_cells[i]==index):
         _compliant.append(i) 
-#    	_compliant. = [np.where(x == index)[0] for x,i in enumerate(compliant_cells)]
     # Find the centers of all the cells
     return  _compliant
 
+def compute_cell_centers(mesh,cells):
+    """Returns the center points of the mesh elements, given the list of the different elements that are
+   given as ordered vectors of points.
+    Parameters:
+        cells:       list of arrays
+            list of arrays of point representing the cells. The cell Id is the position in the list.
+    """
+    x_centerpoint=0
+    y_centerpoint=0
+    #initialization of the vector of all the centerpoints of the cells
+    centro=[]
+    for elemento in cells:
+        # cycle on the point of the elements
+        for i in range(len(elemento)):
+        # compute the centerpoint (accumulating)
+         x_centerpoint += mesh.points[elemento[i],0]
+         y_centerpoint += mesh.points[elemento[i],1]
+         # define the center point
+        x_centerpoint/=len(elemento)
+        y_centerpoint/=len(elemento)
+      # append to the centerpoints vector the element computed
+        centro.append([x_centerpoint,y_centerpoint])
+      # re-initialize the accumulation vectors
+        x_centerpoint=0
+        y_centerpoint=0
+    return(centro) 
 
 def get_dual(mesh,  order=False):
     """Returns the dual mesh held in a dictionary with dual["points"] giving the coordinates and
@@ -107,10 +132,6 @@ def get_dual(mesh,  order=False):
     g = nx.Graph(graph)
     # initialization of the figure
     plt.figure()
-    # centerpoints of each element definition and initialization
-    cp=[]
-    x_centerpoint=0
-    y_centerpoint=0
     # cycle on the elements
     for elemento in alpha:
       # cycle on the point of the elements
@@ -119,17 +140,8 @@ def get_dual(mesh,  order=False):
        x_value = [mesh.points[elemento[i-1],0],mesh.points[elemento[i],0]]
        y_value = [mesh.points[elemento[i-1],1],mesh.points[elemento[i],1]]
        plt.plot(x_value,y_value)  
-       # compute the centerpoint (accumulating)
-       x_centerpoint += mesh.points[elemento[i],0]
-       y_centerpoint += mesh.points[elemento[i],1]
-      # define the center point
-      x_centerpoint/=len(elemento)
-      y_centerpoint/=len(elemento)
-      # append to the centerpoints vector the element computed
-      cp.append([x_centerpoint,y_centerpoint])
-      # re-initialize the accumulation vectors
-      x_centerpoint=0
-      y_centerpoint=0
+    # compute the centerpoints
+    cp = compute_cell_centers(mesh,alpha)
     # draw the adjacency graph
     nx.draw(g,pos=cp, with_labels=True)
     plt.savefig('foo.png')
