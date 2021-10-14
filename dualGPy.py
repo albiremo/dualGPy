@@ -2,7 +2,6 @@ import meshio
 import mypy
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
 class Mesh() :
     def __init__(self, mesh):
@@ -17,7 +16,12 @@ class Mesh() :
         self.area = []
 
     def setup_mesh(self):
-        """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list. """
+        """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list. 
+        The method fills also the vector of the center points of the mesh.
+        Results:
+            - class.boundary faces
+            - class.cells
+            - class.centers """
         for i in range(len(self.mesh.cells)):
           for j in range(len(self.mesh.cells[i][1])):
            self.cells.append(self.mesh.cells[i][1][j])
@@ -44,9 +48,9 @@ class Mesh() :
            x_centerpoint=0
            y_centerpoint=0
 
-
-    def get_area(self):
-      """Returns the area of a polygon given the vertices.
+    @staticmethod
+    def get_area(points):
+      """ Static method that returns the area of a polygon given the vertices.
          Parameters:
          points:     numpy.ndarray
             Vertices of the polygon
@@ -54,7 +58,7 @@ class Mesh() :
 
         # shift all the points by one
         
-      points = self.mesh.points 
+      points = points 
       shifted = np.roll(points, 1, axis=0)
 
         # Use the shoelace formula
@@ -64,7 +68,7 @@ class Mesh() :
 
     @staticmethod    
     def get_dual_points(compliant_cells : int, index : int) -> int:
-      """Returns the points of the dual mesh nearest to the point in the mesh given by the index.
+      """ Static method that returns the points of the dual mesh nearest to the point in the mesh given by the index.
           Parameters:
           mesh:       meshio.Mesh object
               Input mesh.
@@ -84,13 +88,8 @@ class Mesh() :
       return compliant
     
     def get_dual(self):
-     """Returns the dual mesh held in a dictionary with dual["points"] giving the coordinates and
+     """Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
      dual["cells"] giving the indicies of all the cells of the dual mesh.
-     Parameters:
-         mesh:       meshio.Mesh object
-             Input mesh.
-         order:      boolean
-             Whether to reorder the indices of each cell, such that they are in anticlockwise order.
      """
      self.setup_mesh()
      # Get the first set of points of the dual mesh
@@ -125,7 +124,7 @@ class Mesh() :
      # definition of the graph from the dictionary as sugegsted by networkx
 
     def generate_graph(self) -> nx.Graph:
-     """ Generating a networkx graph element """       
+     """ Generating a networkx graph element starting from the graph dictionary previously generated """       
      return nx.Graph(self.graph)
 
 
