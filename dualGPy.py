@@ -125,6 +125,9 @@ class Mesh() :
 
     def generate_graph(self) -> nx.Graph:
      """ Generating a networkx graph element starting from the graph dictionary previously generated """       
-     return nx.Graph(self.graph)
+     g = nx.Graph(self.graph)
+     # numpy adjacency matrix
+     numg = nx.to_numpy_array(g, nodelist=range(len(self.cells)))
+     return g , numg
 
-
+  

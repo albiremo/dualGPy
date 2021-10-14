@@ -40,7 +40,8 @@ mesh = meshio.Mesh(
 
 Mesh1 = dm.Mesh(mesh)
 Mesh1.get_dual()
-graph = Mesh1.generate_graph()
+graph , numarray = Mesh1.generate_graph()
+print(numarray)
 ## initialization of the figure
 plt.figure()
 ## cycle on the elements
