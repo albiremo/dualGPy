@@ -122,21 +122,33 @@ class Mesh() :
             inter = list(set(self.cells[i]).intersection(j))
             if ((len(inter)>=2) and (i not in self.boundary_cells)):
               self.boundary_cells.append(i) 
-     # definition of the graph from the dictionary as sugegsted by networkx
 
     def generate_graph(self) -> nx.Graph:
-     """ Generating a networkx graph element starting from the graph dictionary previously generated """       
-     g = nx.Graph(self.graph)
+     """ Generating a networkx graph element starting from the graph dictionary previously generated
+     and the numpy respective adjacency matrix"""
+
+     g = nx.DiGraph(self.graph)
      # numpy adjacency matrix
      numg = nx.to_numpy_array(g, nodelist=range(len(self.cells)))
      return g , numg
     
+    @staticmethod
     def adj_to_csr(adj : int):
      """Parsing the adjacency matrix in numpy in a CSR (Compressed Sparse Row) representation
      Parameters:
 
      adj : Adjacency matrix
+
      """
+     vertex = np.zeros(len(adj))
+     edges = []
+     weight = []
+     for i in range(len(adj[:,1])):         
+       vertex[i] =  np.sum(np.count_nonzero(adj,axis=1)[:i])
+       for j in range(len(adj[1,:])):
+           if adj[i,j]!=0:
+            edges.append(j)
+     return vertex, edges
 
 
-  
+

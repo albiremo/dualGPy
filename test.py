@@ -55,3 +55,4 @@ for elemento in Mesh1.cells:
 #draw the adjacency graph
 nx.draw(graph,pos=Mesh1.centers, with_labels=True)
 plt.savefig('foo.png')
+Mesh1.adj_to_csr(numarray)
