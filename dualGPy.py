@@ -49,7 +49,7 @@ class Mesh() :
            y_centerpoint=0
 
     @staticmethod
-    def get_area(points):
+    def get_area(points : np.float64) -> np.float64:
       """ Static method that returns the area of a polygon given the vertices.
          Parameters:
          points:     numpy.ndarray
@@ -111,7 +111,8 @@ class Mesh() :
           for j in compliant_cells:
              if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
-               if ((len(inter)>=2) and (j not in self.graph[i])):
+               # the last statement avoid the bi-directed graph
+               if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
                  self.graph[i].append(j)     
      # Define the boundary cells in a similar way we did for the graph
      self.boundary_cells = []       
@@ -129,5 +130,13 @@ class Mesh() :
      # numpy adjacency matrix
      numg = nx.to_numpy_array(g, nodelist=range(len(self.cells)))
      return g , numg
+    
+    def adj_to_csr(adj : int):
+     """Parsing the adjacency matrix in numpy in a CSR (Compressed Sparse Row) representation
+     Parameters:
+
+     adj : Adjacency matrix
+     """
+
 
   
