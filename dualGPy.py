@@ -134,8 +134,6 @@ class Mesh() :
                if ((len(inter)>=2) and (inter not in faces[i])):
                  faces[i].append(inter)
      boundary_test = []  
-     counter_boundary_points = 0
-     faccia_test = []
 # TODO Experimental part to automatically determine the boundary condition
 # Right now we generate all the combination of possible faces and we see if they
 # are in the neightborhood. If they are not we print them out. Two issues identified
@@ -147,7 +145,19 @@ class Mesh() :
      # solution from https://stackoverflow.com/questions/69618239/missing-couple-of-elements-in-a-vector
         combination = itertools.combinations(self.cells[i],2)
         inter_boundary = set(combination).difference(map(tuple,faces[i]))
-        print("difference:", list(inter_boundary))
+        print(i) 
+        print("faces:", faces[i])
+        list_inter_boundary = list(inter_boundary)
+        loop_boundary = list_inter_boundary.copy()
+        # We create a copy of the list with [:] because we cannot remove elements from a list we are looping
+        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list   
+        # We check the presence of the iverted faces and we free the list of the boundaries.
+        for element in loop_boundary:
+           for face_cell in faces[i]:
+             if all(np.flip(element) == face_cell):
+                 list_inter_boundary.remove(element)
+        print("cleaned list:", list_inter_boundary)
+
      # Define the boundary cells in a similar way we did for the graph
      self.boundary_cells = []       
      for i in range(len(self.cells)):
