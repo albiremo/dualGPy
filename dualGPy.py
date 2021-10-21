@@ -10,7 +10,10 @@ class Mesh() :
         self.graph = {}
         self.cells = []  
         self.boundary_cells = []
-        self.boundary_faces = []
+        self.boundary_faces = [] 
+        self.onValley = []
+        self.onRidge = []
+        self.onCorner = []
         self.centers = []
         #TODO: implement in setup_mesh the method to fill it
         self.volume = []
@@ -35,12 +38,12 @@ class Mesh() :
         y_centerpoint=0
         # initialization of the vector of all the centerpoints of the cells
         for elemento in self.cells:
-           # cycle on the point of the elements
+        # cycle on the point of the elements
            for i in range(len(elemento)):
-           # compute the centerpoint (accumulating)
+        # compute the centerpoint (accumulating)
              x_centerpoint += self.mesh.points[elemento[i],0]
              y_centerpoint += self.mesh.points[elemento[i],1]
-             # define the center point
+        # define the center point
            x_centerpoint/=len(elemento)
            y_centerpoint/=len(elemento)
         #  append to the centerpoints vector the element computed
@@ -51,16 +54,15 @@ class Mesh() :
         # fill the area vector by cycling on the cells and use the 
         # chain rule by calling the static method ger_area
         # TODO: area computation by chain rule not working properly
-#        points_cells = []
-#        for cellula in self.cells:
-#            for j in range(len(cellula)):
-#                points_cells.append(self.mesh.points[cellula[j]])
-#            print(points_cells)
-#            self.area.append(self.get_area(points_cells))
+        #        points_cells = []
+        #        for cellula in self.cells:
+        #            for j in range(len(cellula)):
+        #                points_cells.append(self.mesh.points[cellula[j]])
+        #            print(points_cells)
+        #            self.area.append(self.get_area(points_cells))
 
-            # re-initialize point cells
-            
-         #   point_cells = []
+        # re-initialize point cells    
+        #   point_cells = []
 
     @staticmethod
     def get_area(points) -> np.float64:
@@ -109,9 +111,12 @@ class Mesh() :
      compliant_cells = Mesh.get_dual_points(self.cells, 0)    
      # define a new key of the dictionary for each cell of the mesh
      faces = {}
+     # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
+     boundary_dict = {}
      for i in range(len(self.cells)):
         self.graph.update({i :[]})
-        faces.update({i :[]})
+        faces.update({i :[]}) 
+        boundary_dict.update({i :[]})
      # cycle on the points
      for idx in range(1, len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
@@ -126,28 +131,26 @@ class Mesh() :
           for j in compliant_cells:
              if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
-               # the last statement avoid the bi-directed graph
+        # the last statement avoid the bi-directed graph
                if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
                  self.graph[i].append(j)     
-               # in the faces part we have to associate with each cell all the faces
-               # like in a bi-directed graph
+        # in the faces part we have to associate with each cell all the faces
+        # like in a bi-directed graph
                if ((len(inter)>=2) and (inter not in faces[i])):
                  faces[i].append(inter)
-     boundary_test = []  
-# TODO Experimental part to automatically determine the boundary condition
-# Right now we generate all the combination of possible faces and we see if they
-# are in the neightborhood. If they are not we print them out. Two issues identified
-# with this strategy:
-# - The diagonal are not considered as a neightborhood and they would be considered as boundary
-#   for this reason we need a way to exclude them
+
+        # automatically determine the boundary condition
+        # Right now we generate all the combination of possible faces and we see if they
+        # are in the neightborhood. If they are not we print them out.
 
      for i in range(len(self.cells)):
-     # solution from https://stackoverflow.com/questions/69618239/missing-couple-of-elements-in-a-vector
+        # solution from https://stackoverflow.com/questions/69618239/missing-couple-of-elements-in-a-vector
         combination = itertools.combinations(self.cells[i],2)
         inter_boundary = set(combination).difference(map(tuple,faces[i]))
         print(i) 
         print("faces:", faces[i])
-        list_inter_boundary = list(inter_boundary)
+        list_inter_boundary = list(map(list,inter_boundary))
+        print(list_inter_boundary)
         loop_boundary = list_inter_boundary.copy()
         # We create a copy of the list with [:] because we cannot remove elements from a list we are looping
         # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list   
@@ -156,18 +159,34 @@ class Mesh() :
            for face_cell in faces[i]:
              if all(np.flip(element) == face_cell):
                  list_inter_boundary.remove(element)
-        print("cleaned list:", list_inter_boundary)
-
-     # Define the boundary cells in a similar way we did for the graph
-     self.boundary_cells = []       
-     for i in range(len(self.cells)):
-     # We cycle on the boundary cells marked
-         for j in self.boundary_faces:
-            inter = list(set(self.cells[i]).intersection(j))
-            if ((len(inter)>=2) and (i not in self.boundary_cells)):
-              self.boundary_cells.append(i) 
-     print(self.boundary_cells)     
-
+        boundary_dict[i].extend(list_inter_boundary)
+        #TODO: extend to 3D
+        # if is more than number of diagonal i should add it to the boundary cells, because
+        # one face is the boundary (I am not currently interested in which are the boundary faces)
+        # and build the on boundary vector
+        num_diag = len(self.cells[i])*(len(self.cells[i])-3)/2
+        num_boundaries = len(boundary_dict[i]) - num_diag
+        if (len(boundary_dict[i]) > num_diag) : 
+            self.boundary_cells.append(np.int(num_boundaries))
+            if (num_boundaries == 1):
+                self.onValley.append(i)
+            elif (num_boundaries == 2):
+                self.onRidge.append(i)
+            elif (num_boundaries>=3):
+                self.onCorner.append(i)
+        else:
+            self.boundary_cells.append(np.int(0))
+        
+        # Alternative way to define the boundary cells    
+#----------------------------------------------------------------
+#     self.boundary_cells = []       
+#     for i in range(len(self.cells)):
+#     # We cycle on the boundary cells marked
+#         for j in self.boundary_faces:
+#            inter = list(set(self.cells[i]).intersection(j))
+#            if ((len(inter)>=2) and (i not in self.boundary_cells)):
+#              self.boundary_cells.append(i) 
+#---------------------------------------------------------------
     def generate_graph(self) -> nx.Graph:
      """ Generating a networkx graph element starting from the graph dictionary previously generated
      and the numpy respective adjacency matrix"""
