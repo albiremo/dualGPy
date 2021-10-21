@@ -1,10 +1,9 @@
 import meshio
 import dualGPy as dm
-# For plotting both the mesh and dual mesh
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
-# two triangles and one quad
+
 points = [
     [0.0, 0.0],
     [1.0, 0.0],
