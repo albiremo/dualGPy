@@ -1,5 +1,6 @@
 import meshio
-import dualGPy as dm
+import Mesh as dm
+import Graph as graph
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
@@ -37,21 +38,26 @@ mesh = meshio.Mesh(
 }
 )
 
-Mesh1 = dm.Mesh(mesh)
-Mesh1.get_dual()
-graph , numarray = Mesh1.generate_graph()
-print(numarray)
-## initialization of the figure
-plt.figure()
-## cycle on the elements
-for elemento in Mesh1.cells:
-## cycle on the point of the elements
- for i in range(len(elemento)):
-# # plot the grid
-  x_value = [mesh.points[elemento[i-1],0],mesh.points[elemento[i],0]]
-  y_value = [mesh.points[elemento[i-1],1],mesh.points[elemento[i],1]]
-  plt.plot(x_value,y_value)  
-#draw the adjacency graph
-nx.draw(graph,pos=Mesh1.centers, with_labels=True)
-plt.savefig('foo.png')
-Mesh1.adj_to_csr(numarray)
+Mesh1 = dm.Mesh2D(mesh)
+Mesh1.get_boundary_faces()
+Graph1 = graph.Graph2D(Mesh1)
+Graph1.get_adj_matrix()
+
+print(Graph1.graph)
+
+#graph , numarray = Mesh1.generate_graph()
+#print(numarray)
+### initialization of the figure
+#plt.figure()
+### cycle on the elements
+#for elemento in Mesh1.cells:
+### cycle on the point of the elements
+# for i in range(len(elemento)):
+## # plot the grid
+#  x_value = [mesh.points[elemento[i-1],0],mesh.points[elemento[i],0]]
+#  y_value = [mesh.points[elemento[i-1],1],mesh.points[elemento[i],1]]
+#  plt.plot(x_value,y_value)  
+##draw the adjacency graph
+#nx.draw(graph,pos=Mesh1.centers, with_labels=True)
+#plt.savefig('foo.png')
+#Mesh1.adj_to_csr(numarray)
