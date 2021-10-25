@@ -10,13 +10,17 @@ class Mesh(abc.ABC):
     def __init__(self, mesh):
         self.mesh = mesh
         self.cells = []  
+        # non directional faces (in graph sense)
         self.faces = {}
+        # Directional faces in graph sense
+        self.Dfaces ={}
         self.centers = []
         self.volume = []
         self.area = []
         self.onValley  = []
         self.onRidge  = []
         self.onCorner  = []
+        self.boundary_cells = []
 
     @abc.abstractmethod
     def ComputeVolume(self,points):
@@ -101,7 +105,7 @@ class Mesh2D(Mesh) :
     def ComputeArea(self):
      """ Compute the area that in case of the 2D is the length of the segment associated with the faces of the cell. As in the graph the segmen    t are not repeated for different cells but are considered 
      """ 
-     for key, value in self.faces.items():
+     for key, value in self.Dfaces.items():
          for segment in value:
              leng = np.sqrt((self.mesh.points[segment[1]][1]-self.mesh.points[segment[0]][1])**2+(self.mesh.points[segment[1]][0]-self.mesh.points[segment[0]][0])**2)
              self.area.append(leng)
@@ -115,6 +119,7 @@ class Mesh2D(Mesh) :
      compliant_cells = get_dual_points(self.cells, 0)    
      for i in range(len(self.cells)):
         self.faces.update({i :[]}) 
+        self.Dfaces.update({i :[]}) 
      # cycle on the points
      for idx in range(1, len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
@@ -132,6 +137,8 @@ class Mesh2D(Mesh) :
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
                if ((len(inter)>=2) and (inter not in self.faces[i]) and (inter not in self.faces[j])):
+                 self.Dfaces[i].append(inter) 
+               if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
 
     def boundary_detection(self):
@@ -156,6 +163,7 @@ class Mesh2D(Mesh) :
              if all(np.flip(element) == face_cell):
                  list_inter_boundary.remove(element)
         boundary_dict[i].extend(list_inter_boundary)
+        print(boundary_dict)
         # if is more than number of diagonal i should add it to the boundary cells, because
         # one face is the boundary (I am not currently interested in which are the boundary faces)
         # and build the on boundary vector
@@ -171,7 +179,6 @@ class Mesh2D(Mesh) :
                 self.onCorner.append(i)
         else:
             self.boundary_cells.append(np.int(0))
-        
         # Alternative way to define the boundary cells    
 #----------------------------------------------------------------
 #     self.boundary_cells = []       
