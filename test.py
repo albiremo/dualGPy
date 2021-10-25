@@ -40,10 +40,12 @@ mesh = meshio.Mesh(
 
 Mesh1 = dm.Mesh2D(mesh)
 Mesh1.get_boundary_faces()
+Mesh1.ComputeVolume()
+Mesh1.ComputeArea()
+# graph
 Graph1 = graph.Graph2D(Mesh1)
 Graph1.get_adj_matrix()
-
-print(Graph1.graph)
+Graph1.adj_to_csr()
 
 #graph , numarray = Mesh1.generate_graph()
 #print(numarray)

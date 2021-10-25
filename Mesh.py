@@ -12,7 +12,6 @@ class Mesh(abc.ABC):
         self.cells = []  
         self.faces = {}
         self.centers = []
-        #TODO: implement in setup_mesh the method to fill it
         self.volume = []
         self.area = []
         self.onValley  = []
@@ -74,23 +73,39 @@ class Mesh(abc.ABC):
            x_centerpoint=0
            y_centerpoint=0
 
-
-
-
-
-
 class Mesh2D(Mesh) :
     
     def __init__(self, mesh):
         super().__init__(mesh)
         self.setup_mesh()
 
-    def ComputeVolume(self,points):
-        print("computeVolume")
+    def ComputeVolume(self):
+        """ In the case of the 2D class it will be an Area """
+        # points of the specific cell
+        cell_points=[]
+        # cycle on the cells
+        for cell in self.cells:
+        # cycle on the indexes
+            for index in cell:
+        # accumulating the cell points
+                cell_points.extend(self.mesh.points[index])
+        # applying shoelace formula
+        # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
+        # 2. apply the shoelace
+            cell_points_reshaped=np.reshape(cell_points,(len(cell),2))
+            shifted = np.roll(cell_points_reshaped, 1, axis=0)
+            volume = 0.5 * np.sum((shifted[:, 0] + cell_points_reshaped[:, 0])*(shifted[:, 1] - cell_points_reshaped[:, 1]))
+            self.volume.append(abs(volume))
+            cell_points = []
 
-    def ComputeArea(self,points):
-        print("ComputeArea")
-
+    def ComputeArea(self):
+     """ Compute the area that in case of the 2D is the length of the segment associated with the faces of the cell. As in the graph the segmen    t are not repeated for different cells but are considered 
+     """ 
+     for key, value in self.faces.items():
+         for segment in value:
+             leng = np.sqrt((self.mesh.points[segment[1]][1]-self.mesh.points[segment[0]][1])**2+(self.mesh.points[segment[1]][0]-self.mesh.points[segment[0]][0])**2)
+             self.area.append(leng)
+ 
    
     def get_boundary_faces(self):
      """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
@@ -116,7 +131,7 @@ class Mesh2D(Mesh) :
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
-               if ((len(inter)>=2) and (inter not in self.faces[i])):
+               if ((len(inter)>=2) and (inter not in self.faces[i]) and (inter not in self.faces[j])):
                  self.faces[i].append(inter)
 
     def boundary_detection(self):
@@ -165,6 +180,6 @@ class Mesh2D(Mesh) :
 #         for j in self.boundary_faces:
 #            inter = list(set(self.cells[i]).intersection(j))
 #            if ((len(inter)>=2) and (i not in self.boundary_cells)):
-#              self.boundary_cells.append(i) 
+#              self.boundary_cells.append(i) gg
 #---------------------------------------------------------------
 

@@ -16,17 +16,6 @@ class Graph(abc.ABC):
     def get_adj_matrix(self):
         raise NotImplementedError
 
-    def generate_graph(self) -> nx.Graph:
-     """ Generating a networkx graph element starting from the graph dictionary previously generated
-     and the numpy respective adjacency matrix"""
-     
-     # we use a directed graph because we do not want the bi-directed references 
-     # in the adjacency matrix
-     g = nx.DiGraph(self.graph)
-     # numpy adjacency matrix
-     numg = nx.to_numpy_array(g, nodelist=range(len(self.mesh.cells)))
-     return g , numg
-    
     def adj_to_csr(self):
      """Parsing the adjacency matrix in numpy in a CSR (Compressed Sparse Row) representation
      Parameters:
@@ -36,7 +25,7 @@ class Graph(abc.ABC):
      """
      # initialization vertex and edges
      # TODO : weight
-     self.vertex = np.zeros(len(adj))
+     self.vertex = np.zeros(len(self.adj))
 
      # the CSR representation is built starting from the definition, hence
      # we cycle over the adjacency matrix, we identify the non zero entry
@@ -47,7 +36,7 @@ class Graph(abc.ABC):
      for i in range(len(self.adj[:,1])):         
        self.vertex[i] =  np.sum(np.count_nonzero(self.adj,axis=1)[:i])
        for j in range(len(self.adj[1,:])):
-           if adj[i,j]!=0:
+           if self.adj[i,j]!=0:
             self.edges.append(j)
 
 
@@ -59,7 +48,6 @@ class Graph2D(Graph):
      # Get the first set of points of the dual mesh
      for i in range(len(self.mesh.cells)):
         self.graph.update({i :[]})
-     print(self.graph)
      # cycle on the points
      for idx in range(len(self.mesh.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
@@ -78,4 +66,9 @@ class Graph2D(Graph):
                if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
                  self.graph[i].append(j)     
 
-
+     # we use a directed graph because we do not want the bi-directed references 
+     # in the adjacency matrix
+     g = nx.DiGraph(self.graph)
+     # numpy adjacency matrix
+     self.adj = nx.to_numpy_array(g, nodelist=range(len(self.mesh.cells)))
+ 
