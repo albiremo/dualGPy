@@ -25,7 +25,7 @@ class Graph(abc.ABC):
      """
      # initialization vertex and edges
      # TODO : weight
-     self.vertex = np.zeros(len(self.adj))
+     #self.vertex = np.zeros(len(self.adj))
 
      # the CSR representation is built starting from the definition, hence
      # we cycle over the adjacency matrix, we identify the non zero entry
@@ -33,11 +33,12 @@ class Graph(abc.ABC):
      # non zero elements in the edges vector. We hence fill the edges vector at the same
      # way
 
-     for i in range(len(self.adj[:,1])):         
-       self.vertex[i] =  np.sum(np.count_nonzero(self.adj,axis=1)[:i])
-       for j in range(len(self.adj[1,:])):
+     for i in range(len(self.adj[:,1])):  
+       self.vertex.append(np.sum(np.count_nonzero(self.adj,axis=1)[:i]))
+       for j in range(len(self.adj[i,:])):
            if self.adj[i,j]!=0:
             self.edges.append(j)
+     self.vertex.append(np.sum(np.count_nonzero(self.adj)))
 
 
 class Graph2D(Graph):
@@ -63,12 +64,13 @@ class Graph2D(Graph):
              if i!=j:
                inter = list(set(self.mesh.cells[i]).intersection(self.mesh.cells[j]))
         # the last statement avoid the bi-directed graph
-               if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
+            #   if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
+               if ((len(inter)>=2) and (j not in self.graph[i])):
                  self.graph[i].append(j)     
 
      # we use a directed graph because we do not want the bi-directed references 
      # in the adjacency matrix
-     g = nx.DiGraph(self.graph)
+     g = nx.Graph(self.graph)
      # numpy adjacency matrix
      self.adj = nx.to_numpy_array(g, nodelist=range(len(self.mesh.cells)))
  
