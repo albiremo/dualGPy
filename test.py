@@ -1,6 +1,6 @@
 import meshio
-import Mesh as dm
-import Graph as graph
+from dualGPy import Mesh as dm
+from dualGPy import Graph as graph
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx

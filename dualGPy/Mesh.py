@@ -3,7 +3,7 @@ import meshio
 import mypy
 import numpy as np
 import itertools
-from Utils import get_dual_points
+from dualGPy import Utils as ut 
 
 class Mesh(abc.ABC):
     """ Interface class to compute all the geometrical characteristics of the mesh """
@@ -116,14 +116,14 @@ class Mesh2D(Mesh) :
      dual["cells"] giving the indicies of all the cells of the dual mesh.
      """
      # Get the first set of points of the dual mesh
-     compliant_cells = get_dual_points(self.cells, 0)    
+     compliant_cells = ut.get_dual_points(self.cells, 0)    
      for i in range(len(self.cells)):
         self.faces.update({i :[]}) 
         self.Dfaces.update({i :[]}) 
      # cycle on the points
      for idx in range(1, len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        compliant_cells = get_dual_points(self.cells, idx)
+        compliant_cells = ut.get_dual_points(self.cells, idx)
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
         # me create the list inter that check the common point between two vectors (that can have also different 
