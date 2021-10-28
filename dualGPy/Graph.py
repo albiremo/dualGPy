@@ -1,12 +1,14 @@
 import abc
 import mypy
 import numpy as np
+import matplotlib.pyplot as plt
 import networkx as nx
 from dualGPy import Utils as ut
 class Graph(abc.ABC): 
     def __init__(self, mesh):
         self.mesh = mesh
         self.graph={}
+        self.nx_graph = nx.Graph(self.graph)
         self.adj = []
         self.edges = []
         self.vertex = []
@@ -70,7 +72,21 @@ class Graph2D(Graph):
 
      # we use a directed graph because we do not want the bi-directed references 
      # in the adjacency matrix
-     g = nx.Graph(self.graph)
+     self.nx_graph = nx.Graph(self.graph)
      # numpy adjacency matrix
-     self.adj = nx.to_numpy_array(g, nodelist=range(len(self.mesh.cells)))
- 
+     self.adj = nx.to_numpy_array(self.nx_graph, nodelist=range(len(self.mesh.cells)))
+    def draw_graph(self,Mesh1,string):
+     """Draw the mesh and the graph"""
+     plt.figure()
+     ### cycle on the elements
+     for elemento in Mesh1.cells:
+      ### cycle on the point of the elements
+         for i in range(len(elemento)):
+       ## # plot the grid
+          x_value = [Mesh1.mesh.points[elemento[i-1],0],Mesh1.mesh.points[elemento[i],0]]
+          y_value = [Mesh1.mesh.points[elemento[i-1],1],Mesh1.mesh.points[elemento[i],1]]
+          plt.plot(x_value,y_value)  
+     ##draw the adjacency graph
+     nx.draw(self.nx_graph,pos=Mesh1.centers, with_labels=True)
+     plt.savefig(string)
+
