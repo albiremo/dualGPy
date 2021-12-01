@@ -5,6 +5,14 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from dualGPy import Utils as ut
 class Graph(abc.ABC): 
+     """Base class for the Graph2D and Graph3D representation.
+     WARNING! 2D and 3D are considered from a geometric point of
+     view:
+
+     mesh : Mesh representation from meshio library
+
+     """
+ 
     def __init__(self, mesh):
         self.mesh = mesh
         self.graph={}
@@ -25,10 +33,6 @@ class Graph(abc.ABC):
      adj : Adjacency matrix
 
      """
-     # initialization vertex and edges
-     # TODO : weight
-     #self.vertex = np.zeros(len(self.adj))
-
      # the CSR representation is built starting from the definition, hence
      # we cycle over the adjacency matrix, we identify the non zero entry
      # and finally we fill the vertex vector with the position where we find the 
@@ -48,7 +52,7 @@ class Graph2D(Graph):
         super().__init__(mesh)
 
     def get_adj_matrix(self):
-     # Get the first set of points of the dual mesh
+     # Initialize the keys of the graph dictionary
      for i in range(len(self.mesh.cells)):
         self.graph.update({i :[]})
      # cycle on the points
@@ -64,9 +68,9 @@ class Graph2D(Graph):
         for i in compliant_cells:
           for j in compliant_cells:
              if i!=j:
+        # we use the intersect method of the lists
                inter = list(set(self.mesh.cells[i]).intersection(self.mesh.cells[j]))
-        # the last statement avoid the bi-directed graph
-            #   if ((len(inter)>=2) and (j not in self.graph[i]) and (i not in self.graph[j])):
+        # we define a bidirected graph
                if ((len(inter)>=2) and (j not in self.graph[i])):
                  self.graph[i].append(j)     
 

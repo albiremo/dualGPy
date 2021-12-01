@@ -155,7 +155,7 @@ class Mesh2D(Mesh) :
         inter_boundary = set(combination).difference(map(tuple,self.faces[i]))
         list_inter_boundary = list(map(list,inter_boundary))
         loop_boundary = list_inter_boundary.copy()
-        # We create a copy of the list with [:] because we cannot remove elements from a list we are looping
+        # We create a copy of the list with copy method because we cannot remove elements from a list we are looping
         # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list   
         # We check the presence of the iverted faces and we free the list of the boundaries.
         for element in loop_boundary:

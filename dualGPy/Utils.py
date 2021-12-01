@@ -1,5 +1,5 @@
 def get_dual_points(compliant_cells : int, index : int) -> int:
-      """ Static method that returns the points of the dual mesh nearest to the point in the mesh given by the index.
+      """ Function that returns the points of the dual mesh nearest to the point in the mesh given by the index.
           Parameters:
           mesh:       meshio.Mesh object
               Input mesh.
@@ -15,6 +15,5 @@ def get_dual_points(compliant_cells : int, index : int) -> int:
       # compress with the use of any to determine the compliant cells
          if any(compliant_cells[i]==index):
            compliant.append(i) 
-      # Find the centers of all the cells
       return compliant
  
