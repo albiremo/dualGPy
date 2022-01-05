@@ -5,13 +5,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from dualGPy import Utils as ut
 class Graph(abc.ABC): 
-     """Base class for the Graph2D and Graph3D representation.
+    """Base class for the Graph2D and Graph3D representation.
      WARNING! 2D and 3D are considered from a geometric point of
      view:
 
      mesh : Mesh representation from meshio library
-
-     """
+    """
  
     def __init__(self, mesh):
         self.mesh = mesh

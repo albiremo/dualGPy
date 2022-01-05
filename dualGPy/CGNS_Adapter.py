@@ -21,27 +21,12 @@ class CGNS_Adapter:
       # NGON NODE
    if n_elts.data[0] == CGK.NGON_n:
     return n_elts
-
-
- @staticmethod
- def get_NFace_ElementRange_Value_From_Zone_Node(n_zone):
-  """ Static method to retrive the number of faces in the current zone """
-  nFaceNode = None
-  for n_elts in n_zone.nextChild(sidstype=CGK.Elements_ts):
-     # NGON NODE
-     if n_elts.data[0] == CGK.NFACE_n:
-            nFaceNode = n_elts.node
-     if nFaceNode:
-        elemRange = CGU.hasChildName(nFaceNode, CGK.ElementRange_s)
-        return elemRange[1]
-
-
- @staticmethod
- def get_ngon_a_from_zone_node(n_zone):
+ 
+ def get_ngon_a_from_zone_node(self,n_zone):
   """ Retrive the element range and the connectivity ARRAY of the current
         zone. remember that it is composed as follows:
         elementConnectivityArray = [num_el_face0, coord[0].... coord[num_el], num_el_face1, coord[0].....coord[num_el]]"""
-  nGonNode = get_NGon_Node(n_zone).node
+  nGonNode = self.get_NGon_Node(n_zone).node
   if not nGonNode:
         raise ValueError("No NGon Node in the tree")
   elementConnectivityArray = CGU.hasChildName(nGonNode, CGK.ElementConnectivity_s)
@@ -69,16 +54,15 @@ class CGNS_Adapter:
   n_tree = CGC.CGNSPython(t_initial)
   for n_base in n_tree.nextChild(sidstype=CGK.CGNSBase_ts):
         for n_zone in n_base.nextChild(sidstype=CGK.Zone_ts):
-               x,y,z = initialize_coordinates(n_zone.node)
-               ngon_node = get_NGon_Node(n_zone).node
-               elem_range, element_connectivity_array = get_ngon_a_from_zone_node(n_zone)
+               x,y,z = self.initialize_coordinates(n_zone.node)
+               ngon_node = self.get_NGon_Node(n_zone).node
+               elem_range, element_connectivity_array = self.get_ngon_a_from_zone_node(n_zone)
                number_of_faces=[]
                number_of_faces.append(elem_range[1] - elem_range[0] + 1)  # Why a +1 is necessary?
                reshaped = np.reshape(element_connectivity_array,(number_of_faces[0],5))
                modified = []
                for actual_l in reshaped:
                 modified.append(np.delete(actual_l,0))
-               n_face_element_range = get_NFace_ElementRange_Value_From_Zone_Node(n_zone)
   temp = []
   coord = []
   for num in range(len(x)):
