@@ -163,7 +163,6 @@ class Mesh2D(Mesh) :
              if all(np.flip(element) == face_cell):
                  list_inter_boundary.remove(element)
         boundary_dict[i].extend(list_inter_boundary)
-        print(boundary_dict)
         # if is more than number of diagonal i should add it to the boundary cells, because
         # one face is the boundary (I am not currently interested in which are the boundary faces)
         # and build the on boundary vector
