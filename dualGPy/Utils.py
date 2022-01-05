@@ -11,9 +11,9 @@ def get_dual_points(compliant_cells : int, index : int) -> int:
         # building the compliant cells list
       """       
       compliant=[]
-      for i in range(len(compliant_cells)):
+      for i,e in enumerate(compliant_cells):
       # compress with the use of any to determine the compliant cells
-         if any(compliant_cells[i]==index):
+         if any(e==index):
            compliant.append(i) 
       return compliant
  
