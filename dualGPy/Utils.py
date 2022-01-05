@@ -9,11 +9,7 @@ def get_dual_points(compliant_cells : int, index : int) -> int:
               compliant 
         # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
         # building the compliant cells list
-      """       
-      compliant=[]
-      for i,e in enumerate(compliant_cells):
-      # compress with the use of any to determine the compliant cells
-         if e is index:
-           compliant.append(i) 
+      """
+      compliant = [e for i,e in enumerate(compliant_cells) if e is index]
       return compliant
  
