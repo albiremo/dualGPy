@@ -37,12 +37,11 @@ class Graph(abc.ABC):
      # and finally we fill the vertex vector with the position where we find the 
      # non zero elements in the edges vector. We hence fill the edges vector at the same
      # way
-
-     for i in range(len(self.adj[:,1])):  
-       self.vertex.append(np.sum(np.count_nonzero(self.adj,axis=1)[:i]))
-       for j in range(len(self.adj[i,:])):
-           if self.adj[i,j]!=0:
-            self.edges.append(j)
+     non_zero = np.count_nonzero(self.adj,axis=1)
+     for i,e in enumerate(self.adj[:,1]):
+       print(i) 
+       self.vertex.append(np.sum(non_zero[:i]))
+       edges = [ j for j,f in enumerate(self.adj[i,:]) if self.adj[i,j]!=0] 
      self.vertex.append(np.sum(np.count_nonzero(self.adj)))
 
 

@@ -1,3 +1,8 @@
+import numpy as np
+from numba import njit, prange
+
+
+
 def get_dual_points(compliant_cells : int, index : int) -> int:
       """ Function that returns the points of the dual mesh nearest to the point in the mesh given by the index.
           Parameters:
@@ -12,4 +17,12 @@ def get_dual_points(compliant_cells : int, index : int) -> int:
       """
       compliant = [e for i,e in enumerate(compliant_cells) if e is index]
       return compliant
- 
+
+
+@njit(parallel=True)
+def parallel_nonzero_count(arr):
+    flattened = arr.ravel()
+    sum_ = 0
+    for i in prange(flattened.size):
+        sum_ += flattened[i] != 0
+    return sum_
