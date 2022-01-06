@@ -11,19 +11,18 @@ class Graph(abc.ABC):
 
      mesh : Mesh representation from meshio library
     """
- 
     def __init__(self, mesh):
-        self.mesh = mesh
-        self.graph={}
-        self.nx_graph = nx.Graph(self.graph)
-        self.adj = []
-        self.edges = []
-        self.vertex = []
-        self.weight = []
+     self.mesh = mesh
+     self.graph={}
+     self.nx_graph = nx.Graph(self.graph)
+     self.adj = []
+     self.edges = []
+     self.vertex = []
+     self.weight = []
     
     @abc.abstractmethod
     def get_adj_matrix(self):
-        raise NotImplementedError
+     raise NotImplementedError
 
     def adj_to_csr(self):
      """Parsing the adjacency matrix in numpy in a CSR (Compressed Sparse Row) representation
@@ -37,11 +36,16 @@ class Graph(abc.ABC):
      # and finally we fill the vertex vector with the position where we find the 
      # non zero elements in the edges vector. We hence fill the edges vector at the same
      # way
+#     for i in range(len(self.adj[:,1])): 
+#       self.vertex.append(np.sum(np.count_nonzero(self.adj,axis=1)[:i]))
      non_zero = np.count_nonzero(self.adj,axis=1)
      for i,e in enumerate(self.adj[:,1]):
        print(i) 
        self.vertex.append(np.sum(non_zero[:i]))
-       edges = [ j for j,f in enumerate(self.adj[i,:]) if self.adj[i,j]!=0] 
+#       edges = [ j for j,f in enumerate(self.adj[i,:]) if self.adj[i,j]!=0] 
+       for j,f in enumerate(self.adj[i,:]):
+           if self.adj[i,j]!=0:
+            self.edges.append(j)
      self.vertex.append(np.sum(np.count_nonzero(self.adj)))
 
 
@@ -51,10 +55,11 @@ class Graph2D(Graph):
 
     def get_adj_matrix(self):
      # Initialize the keys of the graph dictionary
-     for i in range(len(self.mesh.cells)):
+     for i,e in enumerate(self.mesh.cells):
         self.graph.update({i :[]})
      # cycle on the points
-     for idx in range(len(self.mesh.mesh.points)):
+     for idx,e in enumerate(self.mesh.mesh.points):
+        print(idx)
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
         compliant_cells = ut.get_dual_points(self.mesh.cells, idx)
         # in this part we build the graph: for each point of the mesh we have the compliant cells

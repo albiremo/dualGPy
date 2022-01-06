@@ -42,7 +42,6 @@ class Mesh(abc.ABC):
         raise NotImplementedError
 
 
-    
     def setup_mesh(self):
         """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list. 
         The method fills also the vector of the center points of the mesh.
@@ -50,8 +49,8 @@ class Mesh(abc.ABC):
             - class.boundary faces
             - class.cells
             - class.centers """
-        for i in range(len(self.mesh.cells)):
-          for j in range(len(self.mesh.cells[i][1])):
+        for i,e in enumerate(self.mesh.cells):
+          for j,f in enumerate(self.mesh.cells[i][1]):
            self.cells.append(self.mesh.cells[i][1][j])
      # to activate only if automatic detection is not active
      # to parse the boundaries we make use of the dictionary iterators
@@ -110,7 +109,6 @@ class Mesh2D(Mesh) :
              leng = np.sqrt((self.mesh.points[segment[1]][1]-self.mesh.points[segment[0]][1])**2+(self.mesh.points[segment[1]][0]-self.mesh.points[segment[0]][0])**2)
              self.area.append(leng)
  
-   
     def get_boundary_faces(self):
      """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
      dual["cells"] giving the indicies of all the cells of the dual mesh.
@@ -122,6 +120,7 @@ class Mesh2D(Mesh) :
         self.Dfaces.update({i :[]}) 
      # cycle on the points
      for idx in range(1, len(self.mesh.points)):
+        print(idx)
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
         compliant_cells = ut.get_dual_points(self.cells, idx)
         # in this part we build the graph: for each point of the mesh we have the compliant cells
@@ -140,6 +139,7 @@ class Mesh2D(Mesh) :
                  self.Dfaces[i].append(inter) 
                if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
+
 
     def boundary_detection(self):
      """ automatically determine the boundary condition
