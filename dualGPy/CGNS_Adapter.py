@@ -21,7 +21,8 @@ class CGNS_Adapter:
       # NGON NODE
    if n_elts.data[0] == CGK.NGON_n:
     return n_elts
- 
+
+
  def get_ngon_a_from_zone_node(self,n_zone):
   """ Retrive the element range and the connectivity ARRAY of the current
         zone. remember that it is composed as follows:
@@ -62,14 +63,16 @@ class CGNS_Adapter:
                reshaped = np.reshape(element_connectivity_array,(number_of_faces[0],5))
                modified = []
                for actual_l in reshaped:
-                modified.append(np.delete(actual_l,0))
+                deleted = np.delete(actual_l,0)
+                minus_one = [number - 1 for number in deleted]
+                modified.append(minus_one)
+               print("ended")
   temp = []
   coord = []
   for num in range(len(x)):
         temp.append(x[num])
-        temp.append(y[num])
-        if trid:
-         temp.append(z[num])
+       # temp.append(y[num])
+        temp.append(z[num])
         coord.append(temp)
         temp=[]
   points = coord
