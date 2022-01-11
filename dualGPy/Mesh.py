@@ -3,6 +3,7 @@ import meshio
 import mypy
 import numpy as np
 import itertools
+import time
 from dualGPy import Utils as ut 
 
 class Mesh(abc.ABC):
@@ -21,6 +22,7 @@ class Mesh(abc.ABC):
         self.onRidge  = []
         self.onCorner  = []
         self.boundary_cells = []
+        self.connectivity = {}
 
     @abc.abstractmethod
     def ComputeVolume(self,points):
@@ -118,17 +120,20 @@ class Mesh2D(Mesh) :
      for i in range(len(self.cells)):
         self.faces.update({i :[]}) 
         self.Dfaces.update({i :[]}) 
-     # cycle on the points
+        self.connectivity.update({i :[]}) 
+     # cycle on the points 
      for idx in range(1, len(self.mesh.points)):
-        print(idx)
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        compliant_cells = ut.get_dual_points(self.cells, idx)
+        start_cycle = time.time()
+        compliant_cells = ut.get_dual_points(self.cells, idx) 
+        end_compliant = time.time()
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
         # me create the list inter that check the common point between two vectors (that can have also different 
         # dimension, considering that they can represent cells of completely different shape. 
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
+        start_fill = time.time()
         for i in compliant_cells:
           for j in compliant_cells:
              if i!=j:
@@ -139,6 +144,13 @@ class Mesh2D(Mesh) :
                  self.Dfaces[i].append(inter) 
                if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
+                 self.connectivity[i].append(j)
+                 print("connectivity modified", i)
+        print(idx)
+        end_fill = time.time()
+        total_time = end_fill - start_cycle
+        print("get_dual",100*(end_compliant-start_cycle)/total_time) 
+        print("fill",100*(end_fill-start_fill)/total_time)
 
 
     def boundary_detection(self):
@@ -160,7 +172,7 @@ class Mesh2D(Mesh) :
         # We check the presence of the iverted faces and we free the list of the boundaries.
         for element in loop_boundary:
            for face_cell in self.faces[i]:
-             if all(np.flip(element) == face_cell):
+              if all(np.flip(element) == face_cell):
                  list_inter_boundary.remove(element)
         boundary_dict[i].extend(list_inter_boundary)
         # if is more than number of diagonal i should add it to the boundary cells, because
