@@ -64,6 +64,7 @@ class CGNS_Adapter:
                modified = []
                for actual_l in reshaped:
                 deleted = np.delete(actual_l,0)
+                # to start from 0 as in python
                 minus_one = [number - 1 for number in deleted]
                 modified.append(minus_one)
                print("ended")
@@ -71,11 +72,10 @@ class CGNS_Adapter:
   coord = []
   for num in range(len(x)):
         temp.append(x[num])
-       # temp.append(y[num])
+        temp.append(y[num])
         temp.append(z[num])
         coord.append(temp)
         temp=[]
   points = coord
   cells =[("quad",modified)] 
-  return(points,cells) 
-
+  return(points,cells,modified) 

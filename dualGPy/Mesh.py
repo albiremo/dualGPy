@@ -1,6 +1,7 @@
 import abc 
 import meshio
 import mypy
+import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 import time
@@ -84,6 +85,27 @@ class Mesh2D(Mesh) :
         super().__init__(mesh)
         self.setup_mesh()
 
+    def draw_graph(self,string):
+     """Draw the mesh and the graph"""
+     plt.figure()
+     ### cycle on the elements
+     for i,elemento in enumerate(self.cells):
+      ### cycle on the point of the elements
+         print(i)
+     #to print numero cell
+         if i<100:
+          print("true")
+          plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+          for i in range(len(elemento)):
+       ## # plot the grid
+           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
+           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
+           plt.plot(x_value,y_value)
+         else:
+          break  
+     ##draw the adjacency graph
+     plt.savefig(string)
+
     def ComputeVolume(self):
         """ In the case of the 2D class it will be an Area """
         # points of the specific cell
@@ -124,16 +146,13 @@ class Mesh2D(Mesh) :
      # cycle on the points 
      for idx in range(1, len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        start_cycle = time.time()
         compliant_cells = ut.get_dual_points(self.cells, idx) 
-        end_compliant = time.time()
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
         # me create the list inter that check the common point between two vectors (that can have also different 
         # dimension, considering that they can represent cells of completely different shape. 
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
-        start_fill = time.time()
         for i in compliant_cells:
           for j in compliant_cells:
              if i!=j:
@@ -145,12 +164,7 @@ class Mesh2D(Mesh) :
                if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
-                 print("connectivity modified", i)
         print(idx)
-        end_fill = time.time()
-        total_time = end_fill - start_cycle
-        print("get_dual",100*(end_compliant-start_cycle)/total_time) 
-        print("fill",100*(end_fill-start_fill)/total_time)
 
 
     def boundary_detection(self):
@@ -172,7 +186,7 @@ class Mesh2D(Mesh) :
         # We check the presence of the iverted faces and we free the list of the boundaries.
         for element in loop_boundary:
            for face_cell in self.faces[i]:
-              if all(np.flip(element) == face_cell):
+              if sorted(element) == sorted(face_cell):
                  list_inter_boundary.remove(element)
         boundary_dict[i].extend(list_inter_boundary)
         # if is more than number of diagonal i should add it to the boundary cells, because
