@@ -32,7 +32,8 @@ class CGNS_Adapter:
         raise ValueError("No NGon Node in the tree")
   elementConnectivityArray = CGU.hasChildName(nGonNode, CGK.ElementConnectivity_s)
   elemRange = CGU.hasChildName(nGonNode, CGK.ElementRange_s)
-  return elemRange[1], elementConnectivityArray[1]
+  ParentElem = CGU.hasChildName(nGonNode, CGK.ParentElements_s)
+  return elemRange[1], elementConnectivityArray[1],ParentElem[1]
 
 
  @staticmethod
@@ -48,7 +49,7 @@ class CGNS_Adapter:
             z = CGU.hasChildName(parent_node, "CoordinateZ")[1]
   return(x,y,z) 
 
- def prepare_cgns_for_meshio(self,trid):
+ def prepare_cgns_for_meshio(self):
   """ extraxt the faces and the points for the meshio elaboration. The flag 3D defines
          if we treat with a 3D or 2D mesh""" 
   (t_initial, t_ini_lk, t_ini_path) = CGM.load(self.name)
@@ -57,17 +58,62 @@ class CGNS_Adapter:
         for n_zone in n_base.nextChild(sidstype=CGK.Zone_ts):
                x,y,z = self.initialize_coordinates(n_zone.node)
                ngon_node = self.get_NGon_Node(n_zone).node
-               elem_range, element_connectivity_array = self.get_ngon_a_from_zone_node(n_zone)
-               number_of_faces=[]
-               number_of_faces.append(elem_range[1] - elem_range[0] + 1)  # Why a +1 is necessary?
-               reshaped = np.reshape(element_connectivity_array,(number_of_faces[0],5))
+               elem_range, element_connectivity_array, parent_elem = self.get_ngon_a_from_zone_node(n_zone)
+               # we need to define the faces. The CGNS format ngon define as a first index
+               # the number of vertices and subsequently the vertices hence we define
+               # a variable index and a position variable to retrive the number of vertices
+               # for each faces
+               index = 0
+               pos=0
+               # cells will be the final list of elemento that will be the collaction of the vertices
+               # of the cell.
+               cells = []
+               elemento = []
+               while pos!=len(element_connectivity_array): 
+                 # we retrive the number of vertices in the cell
+                 index = element_connectivity_array[pos]
+                 # we increment the pos to start collecting the indices
+                 pos+=1
+                 # we collect the indices with a loop adapted to the number of vertices
+                 for i in range(index):
+                     elemento.append(element_connectivity_array[i+pos])
+                 cells.append(elemento)
+                 # we increment pos
+                 pos+=index 
+                 # we empty elemento
+                 elemento = []      
+               #modified will lead to the modification of indices. CGNS start counting from
+               # 1 not 0, hence we must decrement the verices relationship         
                modified = []
-               for actual_l in reshaped:
-                deleted = np.delete(actual_l,0)
-                # to start from 0 as in python
-                minus_one = [number - 1 for number in deleted]
+               for actual_l in cells:
+              #  print(len(actual_l))
+                minus_one = [number - 1 for number in actual_l]
                 modified.append(minus_one)
-               print("ended")
+              # Creation of the dictionary of the volumes based
+              # on the CGNS info
+               number_faces =  len(modified)
+               print("num faces", number_faces)
+               assert(number_faces == len(parent_elem))
+               number_cells = int(number_faces/4) 
+               print("num cells", number_cells)
+               
+               print(np.max(parent_elem))
+               print(parent_elem[100])
+              #init dictionary
+               elems = {}
+               # dictionary key global index cell, value faces composing the cell
+               for i,face in enumerate(modified):
+               # cycle on the two neigh 
+                 for j in range(2):
+               # we check if the key exist in elems, if not we create it
+               # and we add the neighbouring cells.
+                   if parent_elem[i,j] in elems: 
+                      elems[parent_elem[i][j]].append(i)
+                   else:
+                      elems.update({parent_elem[i,j] :[]})
+                      elems[parent_elem[i][j]].append(i)
+
+  # we collect the coordinates
   temp = []
   coord = []
   for num in range(len(x)):
@@ -77,5 +123,4 @@ class CGNS_Adapter:
         coord.append(temp)
         temp=[]
   points = coord
-  cells =[("quad",modified)] 
-  return(points,cells,modified) 
+  return(points,modified,elems) 
