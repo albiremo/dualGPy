@@ -14,7 +14,42 @@ def any_non_zero_values(elements,index):
 
     return False
 
+def convert_faces_to_cells(dictio,faces):
+   """Convert the dictionary created in the CGNS reading
+      in a 3D Volume mesh starting from the faces given
+      in the dictionary as input """
+   # boundary values
+   # the first key of the dictionary contains all the faces that has
+   # a boundary value
+   del dictio[0]
+   # final result to pass to the meshio input
+   risultato = []
+   # final element to be added to the tuple of the elements for meshio
+   elements_final = []
+   # actual analysed cell colletting the indices of all the faces composing it
+   cella = []
+   # final element freed of double vertices
+   cella_finale = []
+   # cycle on the index
+   for key,item in dictio.items():
+      for index in item:    
+   # I collect all the faces composing the cell in cella
+          cella.extend(faces[index])
+   #free the double values
+      cella_finale=list(set(cella))
+      elements_final.append(cella_finale)
+   #re-initialize cella
+      cella = [] 
+   # version for homogeneous meshes, for multi element meshes
+   # develop version with a for on elements_final and an append on the apposite
+   # tetra or other element as has been done in the CGNS adapter
+   if len(cella_finale) == 4: 
+      risultato.append(("tetra",elements_final))
+   #todo: to be impemented new elements
+   return(risultato)
+
 def dualize_mesh(points,cells,direc):
+    """ Passing from a 3D to a 2D mesh in the desired direction (direc) """
     # coordinate to suppress 
     z_del=points[0][direc]
     # correlation dictionary of the old index with the new one
@@ -58,7 +93,24 @@ def dualize_mesh(points,cells,direc):
     # reinitialize temp and marker
       tmp=[]
       marker = 0
-    return(new_point,[("quad",new_cell)]) 
+    polyg = []
+    tri = []
+    quad =[]
+    final = []
+    for i,cell in enumerate(new_cell):
+      if len(cell)==3:
+         tri.append(cell)
+      elif len(cell)==4:
+         quad.append(cell)
+      else:
+         polyg.append(cell)
+    if tri:
+      final.append(("triangle",tri))
+    if quad:
+      final.append(("quad",quad))
+    if polyg:
+      final.append(("polygon",polyg))
+    return(new_point,final) 
 
     
     
@@ -88,6 +140,8 @@ def contains(small, big):
     return False
 
 def address_agglomerated_cells(fc_to_cc_res,num_interval):
+    """ Helper function to analyse the agglomeration in a Paraview environment, with
+        a num_interval scale."""
     #initialize vector of fine cells
     fine_cells = [np.float64(-1) for i in range(len(fc_to_cc_res))]
     #initialize touched flag
