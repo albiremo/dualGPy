@@ -6,6 +6,7 @@ import numpy as np
 import itertools
 import time
 from dualGPy import Utils as ut 
+from dualGPy.Geometry import Face2D  
 
 class Mesh(abc.ABC):
     """ Interface class to compute all the geometrical characteristics of the mesh """
@@ -26,13 +27,8 @@ class Mesh(abc.ABC):
         self.connectivity = {}
 
     @abc.abstractmethod
-    def ComputeVolume(self,points):
-        
+    def ComputeGeometry(self,points):        
         """ compute the volume of the cells with respect to the dimensionality (2D area, 3D volume) """
-        raise NotImplementedError
-    @abc.abstractmethod
-    def ComputeArea(self,points):
-        """ compute the Area of the faces of the cell with respect to the dimensionality """
         raise NotImplementedError
     @abc.abstractmethod
     def get_boundary_faces(self):
@@ -64,12 +60,6 @@ class Mesh2D(Mesh) :
         for i,e in enumerate(self.mesh.cells):
           for j,f in enumerate(self.mesh.cells[i][1]):
            self.cells.append(self.mesh.cells[i][1][j])
-     # to activate only if automatic detection is not active
-     # to parse the boundaries we make use of the dictionary iterators
-     #   for key, value in self.mesh.cell_sets.items():
-     #     for key1,value1 in self.mesh.cell_sets[key].items():
-     #        for i in range(len(value1)):
-     #          self.boundary_faces.append(value1[i])
         x_centerpoint=0
         y_centerpoint=0
         # initialization of the vector of all the centerpoints of the cells
@@ -178,32 +168,25 @@ class Mesh2D(Mesh) :
      plt.savefig(string)
 
 
-    def ComputeVolume(self):
+    def ComputeGeometry(self):
         """ In the case of the 2D class it will be an Area """
         # points of the specific cell
         cell_points=[]
         # cycle on the cells
-        for cell in self.cells:
+        for i,cell in enumerate(self.cells):
         # cycle on the indexes
             for index in cell:
         # accumulating the cell points
                 cell_points.extend(self.mesh.points[index])
-        # applying shoelace formula
+        # applying shoelace formul
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
-            cell_points_reshaped=np.reshape(cell_points,(len(cell),2))
-            shifted = np.roll(cell_points_reshaped, 1, axis=0)
-            volume = 0.5 * np.sum((shifted[:, 0] + cell_points_reshaped[:, 0])*(shifted[:, 1] - cell_points_reshaped[:, 1]))
-            self.volume.append(abs(volume))
-            cell_points = []
-
-    def ComputeArea(self):
-     """ Compute the area that in case of the 2D is the length of the segment associated with the faces of the cell. As in the graph the segmen    t are not repeated for different cells but are considered 
-     """ 
-     for key, value in self.Dfaces.items():
-         for segment in value:
-             leng = np.sqrt((self.mesh.points[segment[1]][1]-self.mesh.points[segment[0]][1])**2+(self.mesh.points[segment[1]][0]-self.mesh.points[segment[0]][0])**2)
-             self.area.append(leng)
+            cella = Face2D(self.Dfaces[i],cell_points)
+            cella.ComputeArea()
+            cella.ComputeLength(self.mesh.points)
+            self.volume.append(cella.area)
+            self.area.extend(cella.leng_segments)
+            cell_points =[]
  
     def get_boundary_faces(self):
      """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
@@ -276,14 +259,100 @@ class Mesh2D(Mesh) :
                 self.onCorner.append(i)
         else:
             self.boundary_cells.append(np.int(0))
-        # Alternative way to define the boundary cells    
-#----------------------------------------------------------------
-#     self.boundary_cells = []       
-#     for i in range(len(self.cells)):
-#     # We cycle on the boundary cells marked
-#         for j in self.boundary_faces:
-#            inter = list(set(self.cells[i]).intersection(j))
-#            if ((len(inter)>=2) and (i not in self.boundary_cells)):
-#              self.boundary_cells.append(i) gg
-#---------------------------------------------------------------
 
+
+#class Mesh3D(Mesh) :
+#    
+#    def __init__(self, mesh):
+#        super().__init__(mesh)
+#        self.setup_mesh()
+#
+#    def setup_mesh(self):
+#        for i,e in enumerate(self.mesh.cells):
+#          for j,f in enumerate(self.mesh.cells[i][1]):
+#           self.cells.append(self.mesh.cells[i][1][j])
+#        x_centerpoint=0
+#        y_centerpoint=0
+#        z_centerpoint=0
+#        # initialization of the vector of all the centerpoints of the cells
+#        for elemento in self.cells:
+#        # cycle on the point of the elements
+#           for i in range(len(elemento)):
+#        # compute the centerpoint (accumulating)
+#             x_centerpoint += self.mesh.points[elemento[i],0]
+#             y_centerpoint += self.mesh.points[elemento[i],1]
+#             z_centerpoint += self.mesh.points[elemento[i],2]
+#        # define the center point
+#           x_centerpoint/=len(elemento)
+#           y_centerpoint/=len(elemento)
+#           z_centerpoint/=len(elemento)
+#        #  append to the centerpoints vector the element computed
+#           self.centers.append([x_centerpoint,y_centerpoint,z_centerpoint])
+#        #  re-initialize the accumulation vectors
+#           x_centerpoint=0
+#           y_centerpoint=0
+#           z_centerpoint=0
+#
+#
+#    def get_boundary_faces(self):
+#     """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
+#     dual["cells"] giving the indicies of all the cells of the dual mesh.
+#     """
+#     # Get the first set of points of the dual mesh
+#     compliant_cells = ut.get_dual_points(self.cells, 0)    
+#     for i in range(len(self.cells)):
+#        self.faces.update({i :[]}) 
+#        self.Dfaces.update({i :[]}) 
+#        self.connectivity.update({i :[]}) 
+#     # cycle on the points 
+#     for idx in range(1, len(self.mesh.points)):
+#        # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
+#        compliant_cells = ut.get_dual_points(self.cells, idx) 
+#        # in this part we build the graph: for each point of the mesh we have the compliant cells
+#        # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
+#        # me create the list inter that check the common point between two vectors (that can have also different 
+#        # dimension, considering that they can represent cells of completely different shape. 
+#        # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
+#        # connected with the analysed cell, we add it to the respective dictionary key.
+#        for i in compliant_cells:
+#          for j in compliant_cells:
+#             if i!=j:
+#               inter = list(set(self.cells[i]).intersection(self.cells[j]))
+#        # in the faces part we have to associate with each cell all the faces
+#        # like in a bi-directed graph
+#               if ((len(inter)>=3) and (inter not in self.faces[i]) and (inter not in self.faces[j])):
+#                 self.Dfaces[i].append(inter) 
+#               if ((len(inter)>=3) and (inter not in self.faces[i])):
+#                 self.faces[i].append(inter)
+#                 self.connectivity[i].append(j)
+#        print(idx)
+#
+#
+#    def ComputeVolume(self):
+#        """ In the case of the 3D class it will be a proper volume """
+#        # points of the specific cell
+#        cell_points=[]
+#        # cycle on the cells
+#        for cell in self.cells:
+#        # cycle on the indexes
+#            for index in cell:
+#        # accumulating the cell points
+#                cell_points.extend(self.mesh.points[index])
+#        # applying shoelace formula
+#        # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
+#        # 2. apply the shoelace
+#            if len(cell_points)==4: #case of teth
+#            cell_points_reshaped=np.reshape(cell_points,(len(cell),2))
+#            shifted = np.roll(cell_points_reshaped, 1, axis=0)
+#            volume = 0.5 * np.sum((shifted[:, 0] + cell_points_reshaped[:, 0])*(shifted[:, 1] - cell_points_reshaped[:, 1]))
+#            self.volume.append(abs(volume))
+#            cell_points = []
+#
+#    def ComputeArea(self):
+#     """ Compute the area that in case of the 2D is the length of the segment associated with the faces of the cell. As in the graph the segmen    t are not repeated for different cells but are considered 
+#     """ 
+#     for key, value in self.Dfaces.items():
+#         for segment in value:
+#             leng = np.sqrt((self.mesh.points[segment[1]][1]-self.mesh.points[segment[0]][1])**2+(self.mesh.points[segment[1]][0]-self.mesh.points[segment[0]][0])**2)
+#             self.area.append(leng)
+# 
