@@ -44,7 +44,7 @@ class Mesh(abc.ABC):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         raise NotImplementedError
 
-
+    @abc.abstractmethod
     def setup_mesh(self):
         """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list. 
         The method fills also the vector of the center points of the mesh.
@@ -52,6 +52,15 @@ class Mesh(abc.ABC):
             - class.boundary faces
             - class.cells
             - class.centers """
+        raise NotImplementedError
+
+class Mesh2D(Mesh) :
+    
+    def __init__(self, mesh):
+        super().__init__(mesh)
+        self.setup_mesh()
+
+    def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
           for j,f in enumerate(self.mesh.cells[i][1]):
            self.cells.append(self.mesh.cells[i][1][j])
@@ -79,32 +88,95 @@ class Mesh(abc.ABC):
            x_centerpoint=0
            y_centerpoint=0
 
-class Mesh2D(Mesh) :
-    
-    def __init__(self, mesh):
-        super().__init__(mesh)
-        self.setup_mesh()
+
+
 
     def draw_graph(self,string):
      """Draw the mesh and the graph"""
      plt.figure()
-     ### cycle on the elements
+    ### cycle on the elements
      for i,elemento in enumerate(self.cells):
       ### cycle on the point of the elements
          print(i)
      #to print numero cell
-         if i<100:
-          print("true")
-          plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
-          for i in range(len(elemento)):
+     #    if i<100:
+     #     print("true")
+     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+         for i in range(len(elemento)):
        ## # plot the grid
            x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
            plt.plot(x_value,y_value)
-         else:
-          break  
+         #else:
+         # break  
+     x1,x2,y1,y2 = plt.axis()  
+     plt.axis((0.0,0.25,-0.1,0.1))
      ##draw the adjacency graph
      plt.savefig(string)
+
+    def draw_aggl_lines_full(self,string,lines_dict):
+     """Draw the mesh and the graph"""
+     plt.figure()
+    ### cycle on the elements
+     for i,elemento in enumerate(self.cells):
+      ### cycle on the point of the elements
+         print(i)
+     #to print numero cell
+     #    if i<100:
+     #     print("true")
+     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+         for i in range(len(elemento)):
+       ## # plot the grid
+           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
+           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
+           plt.plot(x_value,y_value,c='b')
+         #else:
+         # break  
+     x_line = []
+     y_line = []
+     for key,value in lines_dict.items():
+         for cell in value:
+             x_line.append(self.centers[cell][0])
+             y_line.append(self.centers[cell][1])
+         plt.plot(x_line,y_line,linewidth=2.0,c='r')
+         x_line = []
+         y_line = []
+     ##draw the adjacency graph
+     plt.savefig(string)
+
+
+    def draw_aggl_lines(self,string,lines_dict,xlim_min,xlim_max,ylim_min,ylim_max):
+     """Draw the mesh and the graph"""
+     plt.figure()
+    ### cycle on the elements
+     for i,elemento in enumerate(self.cells):
+      ### cycle on the point of the elements
+         print(i)
+     #to print numero cell
+     #    if i<100:
+     #     print("true")
+     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+         for i in range(len(elemento)):
+       ## # plot the grid
+           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
+           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
+           plt.plot(x_value,y_value,c='b')
+         #else:
+         # break  
+     x_line = []
+     y_line = []
+     for key,value in lines_dict.items():
+         for cell in value:
+             x_line.append(self.centers[cell][0])
+             y_line.append(self.centers[cell][1])
+         plt.plot(x_line,y_line,linewidth=2.0,c='r')
+         x_line = []
+         y_line = []
+     x1,x2,y1,y2 = plt.axis()  
+     plt.axis((xlim_min,xlim_max,ylim_min,ylim_max))
+     ##draw the adjacency graph
+     plt.savefig(string)
+
 
     def ComputeVolume(self):
         """ In the case of the 2D class it will be an Area """
