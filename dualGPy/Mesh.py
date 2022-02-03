@@ -107,6 +107,7 @@ class Mesh2D(Mesh) :
     def draw_aggl_lines_full(self,string,lines_dict):
      """Draw the mesh and the graph"""
      plt.figure()
+     plt.axis('equal')
     ### cycle on the elements
      for i,elemento in enumerate(self.cells):
       ### cycle on the point of the elements
@@ -181,7 +182,7 @@ class Mesh2D(Mesh) :
         # applying shoelace formul
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
-            cella = Face2D(self.Dfaces[i],cell_points)
+            cella = Face2D(self.faces[i],cell_points)
             cella.ComputeArea()
             cella.ComputeLength(self.mesh.points)
             self.volume.append(cella.area)
@@ -342,7 +343,7 @@ class Mesh3D(Mesh):
         # applying shoelace formul
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
-            cella = Tetra(cell_points,self.Dfaces[i])
+            cella = Tetra(cell_points,self.faces[i])
             cella.ComputeArea(self.mesh.points)
             cella.ComputeVolume()
             self.volume.append(cella.volume)

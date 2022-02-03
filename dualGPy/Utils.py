@@ -130,15 +130,6 @@ def get_dual_points(compliant_cells, index ):
       return compliant 
 
 
-def contains(small, big):
-    for i in range(len(big)-len(small)+1):
-        for j in range(len(small)):
-            if big[i+j] != small[j]:
-                break
-        else:
-            return True
-    return False
-
 def address_agglomerated_cells(fc_to_cc_res,num_interval):
     """ Helper function to analyse the agglomeration in a Paraview environment, with
         a num_interval scale."""
@@ -170,12 +161,3 @@ def address_agglomerated_cells(fc_to_cc_res,num_interval):
             i+=1
     return(fine_cells)
 
-
-
-@njit(parallel=True)
-def parallel_nonzero_count(arr):
-    flattened = arr.ravel()
-    sum_ = 0
-    for i in prange(flattened.size):
-        sum_ += flattened[i] != 0
-    return sum_

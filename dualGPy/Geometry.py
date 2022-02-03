@@ -52,7 +52,7 @@ class Face2D(Face) :
     def ComputeArea(self):
         cell_points_reshaped=np.reshape(self.points,(self.n_vertices,2))
         shifted = np.roll(cell_points_reshaped, 1, axis=0)
-        area_0 = algebric_area(cell_points_reshaped,shifted)
+        area_0 = self.algebric_area(cell_points_reshaped,shifted)
         self.area = abs(area_0)
                   
     def ComputeLength(self,global_points):
