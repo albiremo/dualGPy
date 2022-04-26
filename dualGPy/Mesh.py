@@ -6,7 +6,8 @@ import numpy as np
 import itertools
 import time
 from dualGPy import Utils as ut 
-from dualGPy.Geometry import Face2D,Tetra 
+from dualGPy.Geometry import Face2D,Tetra,Hexa 
+from collections import defaultdict
 
 class Mesh(abc.ABC):
     """ Interface class to compute all the geometrical characteristics of the mesh """
@@ -96,7 +97,7 @@ class Mesh2D(Mesh) :
        ## # plot the grid
            x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
-           plt.plot(x_value,y_value)
+           plt.plot(x_value,y_value,c='k')
          #else:
          # break  
      x1,x2,y1,y2 = plt.axis()  
@@ -194,15 +195,16 @@ class Mesh2D(Mesh) :
      dual["cells"] giving the indicies of all the cells of the dual mesh.
      """
      # Get the first set of points of the dual mesh
-     compliant_cells = ut.get_dual_points(self.cells, 0)    
+     d = ut.dict_of_indices(self.cells)
      for i in range(len(self.cells)):
-        self.faces.update({i :[]}) 
-        self.Dfaces.update({i :[]}) 
-        self.connectivity.update({i :[]}) 
+       self.faces.update({i :[]}) 
+       self.Dfaces.update({i :[]}) 
+       self.connectivity.update({i :[]}) 
      # cycle on the points 
-     for idx in range(1, len(self.mesh.points)):
+     for idx in range(len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        compliant_cells = ut.get_dual_points(self.cells, idx) 
+       # compliant_cells = ut.get_dual_points(self.cells, idx) 
+        compliant_cells = d[idx] 
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
         # me create the list inter that check the common point between two vectors (that can have also different 
@@ -301,15 +303,15 @@ class Mesh3D(Mesh):
      dual["cells"] giving the indicies of all the cells of the dual mesh.
      """
      # Get the first set of points of the dual mesh
-     compliant_cells = ut.get_dual_points(self.cells, 0)    
+     d = ut.dict_of_indices(self.cells)
      for i in range(len(self.cells)):
         self.faces.update({i :[]}) 
         self.Dfaces.update({i :[]}) 
         self.connectivity.update({i :[]}) 
      # cycle on the points 
-     for idx in range(1, len(self.mesh.points)):
+     for idx in range(len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        compliant_cells = ut.get_dual_points(self.cells, idx) 
+        compliant_cells = d[idx] 
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
         # me create the list inter that check the common point between two vectors (that can have also different 
@@ -339,11 +341,15 @@ class Mesh3D(Mesh):
         # cycle on the indexes
             for index in cell:
         # accumulating the cell points
+                print(self.mesh.points[index])
                 cell_points.extend(self.mesh.points[index])
         # applying shoelace formul
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
-            cella = Tetra(cell_points,self.faces[i])
+            if len(cell_points)==4:
+               cella = Tetra(cell_points,self.faces[i])
+            else:
+               cella= Hexa(cell_points,self.faces[i])
             cella.ComputeArea(self.mesh.points)
             cella.ComputeVolume()
             self.volume.append(cella.volume)

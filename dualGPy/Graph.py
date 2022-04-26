@@ -74,8 +74,8 @@ class Graph2D(Graph):
        ## # plot the grid
           x_value = [Mesh1.mesh.points[elemento[i-1],0],Mesh1.mesh.points[elemento[i],0]]
           y_value = [Mesh1.mesh.points[elemento[i-1],1],Mesh1.mesh.points[elemento[i],1]]
-          plt.plot(x_value,y_value)  
+          plt.plot(x_value,y_value,c='r')  
      ##draw the adjacency graph
-     nx.draw_networkx_edges(self.nx_graph,pos=Mesh1.centers)
+     nx.draw(self.nx_graph,pos=Mesh1.centers,with_labels = True)
      plt.savefig(string)
 

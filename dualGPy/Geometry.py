@@ -178,3 +178,36 @@ class Tetra(Solid):
         mat_1=np.reshape(mat,(self.n_vertices,3)).transpose()
         mat_2=  np.vstack([mat_1,np.ones((1,4))])
         self.volume= 1/6*abs(np.linalg.det(mat_2))
+
+class Hexa(Solid):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.n_vertices = int(len(self.points)/3)
+        print(self.n_vertices)
+        assert(self.n_vertices==8)
+    def ComputeArea(self,global_points):
+        """ compute the Area of the faces of the cell with respect to the dimensionality """
+        if self.Faces:
+         points = []
+         for faccia in self.Faces:
+             for i,e in enumerate(faccia):
+                 points.extend(global_points[e])
+             faccia_el = Face3D(points)
+             faccia_el.ComputeArea() 
+             self.AreaFaces.append(faccia_el.area)
+             points = []
+    def ComputeVolume(self):
+        """ compute the Volume of  of the cells with respect to the dimensionality """
+        # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
+        # here we split the tetra in 2.
+        mat = np.array(self.points)
+        mat_1=np.reshape(mat,(self.n_vertices,3)).transpose()
+        mat_upper0 = mat_1[:,0:2]
+        mat_upper1 = [mat_upper0,mat_1[4]]        
+        mat_upper=  np.vstack([mat_upper1,np.ones((1,4))])
+        volume_upper= 1/6*abs(np.linalg.det(mat_upper))
+        mat_lower0 = mat_1[:,5:7]
+        mat_lower1 = [mat_lower0,mat_1[3]]        
+        mat_lower=  np.vstack([mat_lowe1,np.ones((1,4))])
+        volume_lower= 1/6*abs(np.linalg.det(mat_lower))
+        self.volumes = volume_upper+volume_lower

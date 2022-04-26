@@ -9,6 +9,7 @@ class Coarse_mesh:
 
     def Create_mesh(self):
         d = {}
+        dic_cells = {}
         # We create a dictionary where we associate to the coarse cell (key) with the relative fine cells
         for i, x in enumerate(self.fc_to_cc):
             if x not in d:
@@ -31,7 +32,7 @@ class Coarse_mesh:
             cell_points = []
            # take only the needed points
             for key, value in num_elem.items():
-               if (value < 2 or value ==3):
+               if (value < 4):
                   cell_points.append(self.mesh.mesh.points[key])
             # reordering of the points
             cent=(sum([p[0] for p in cell_points])/len(cell_points),sum([p[1] for p in cell_points])/len(cell_points))
@@ -41,13 +42,11 @@ class Coarse_mesh:
                coarse_cell_clean.append(cell_counter)
                cell_counter+=1   
             agglomerated_points.extend(cell_points)
-            if (len(coarse_cell_clean) == 4):
-               quad.append(coarse_cell_clean)
-            else:
-               polyg6.append(coarse_cell_clean) 
+            if len(coarse_cell_clean) not in dic_cells:
+               dic_cells.update({len(coarse_cell_clean):[]})
+            dic_cells[len(coarse_cell_clean)].append(coarse_cell_clean)
+
         cc = []
-        if quad:
-            cc.append(("quad",quad))
-        if polyg6:
-            cc.append(("polygon",polyg6))
+        for key,value in dic_cells.items():
+            cc.append(("polygon",value))        
         return(d,agglomerated_points,cc)

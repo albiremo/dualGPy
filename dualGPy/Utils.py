@@ -1,6 +1,14 @@
 import numpy as np
 from numba import njit, prange
+from collections import defaultdict
 
+
+def dict_of_indices(a):
+    d = {}
+    for i,l in enumerate(a):
+        for e in l:
+            d.setdefault(e, []).append(i)
+    return d
 
 # http://www.katrin-affolter.ch/Python/performance_of_all_and_any
 @njit
@@ -126,8 +134,9 @@ def get_dual_points(compliant_cells, index ):
         # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
         # building the compliant cells list
       """       
-      compliant = [i for i,e in enumerate(compliant_cells) if any_non_zero_values(e,index)]
-      return compliant 
+ 
+#     compliant = [i for i,e in enumerate(compliant_cells) if any_non_zero_values(e,index)]
+ #     return compliant 
 
 
 def address_agglomerated_cells(fc_to_cc_res,num_interval):
