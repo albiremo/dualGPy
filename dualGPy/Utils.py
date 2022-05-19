@@ -86,14 +86,16 @@ def dualize_mesh(points,cells,direc):
     # we proceed with the cells
     marker = 0
     for i,cell in enumerate(cells):
-      print(i)
+      print(cell)
       for point in cell:
     # if it exist the correspective it means that
     # the point has been renumbered and it exist
         if corr[point]:
           tmp.append(corr[point][0])
-        else:
-          marker = 1
+#        else:
+#          print("m1")
+#          marker = 1
+#      print("rmp",tmp)
     # if marker is 0 it means that there are no problematic
     # points so tmp has been created with ht new index
       if marker == 0:
@@ -104,8 +106,9 @@ def dualize_mesh(points,cells,direc):
     polyg = []
     tri = []
     quad =[]
-    final = []
+    final = []     
     for i,cell in enumerate(new_cell):
+      print("cell",cell)
       if len(cell)==3:
          tri.append(cell)
       elif len(cell)==4:

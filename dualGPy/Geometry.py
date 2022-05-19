@@ -80,6 +80,8 @@ class Face3D(Face) :
              [self.b[0],self.b[1],1],
              [self.c[0],self.c[1],1]])
         magnitude = (x**2 + y**2 + z**2)**.5
+        if (magnitude==0):
+           magnitude = 1e-3
         return ([x/magnitude, y/magnitude, z/magnitude])
 
     def ComputeArea(self):
@@ -92,6 +94,8 @@ class Face3D(Face) :
             product = np.cross(self.points_reshaped[i],rolled[i])
             total = np.add(total,product)
         area_0 = np.dot(total,normal)
+        if abs(area_0 == 0):
+           area_0 = 1e-3
         self.area = abs(area_0/2)
 
 
@@ -183,7 +187,6 @@ class Hexa(Solid):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.n_vertices = int(len(self.points)/3)
-        print(self.n_vertices)
         assert(self.n_vertices==8)
     def ComputeArea(self,global_points):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
@@ -201,13 +204,13 @@ class Hexa(Solid):
         # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
         # here we split the tetra in 2.
         mat = np.array(self.points)
-        mat_1=np.reshape(mat,(self.n_vertices,3)).transpose()
-        mat_upper0 = mat_1[:,0:2]
-        mat_upper1 = [mat_upper0,mat_1[4]]        
-        mat_upper=  np.vstack([mat_upper1,np.ones((1,4))])
+        mat_half=np.reshape(mat,(self.n_vertices,3)).transpose()
+        mat_1=np.reshape(mat_half,(3,8)).transpose()
+        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
+        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
         volume_upper= 1/6*abs(np.linalg.det(mat_upper))
-        mat_lower0 = mat_1[:,5:7]
-        mat_lower1 = [mat_lower0,mat_1[3]]        
-        mat_lower=  np.vstack([mat_lowe1,np.ones((1,4))])
+        mat_lower0 = np.vstack([mat_1[5:9,:],mat_1[3,:]])
+        mat_lower=  np.vstack([mat_lower0.transpose(),np.ones((1,4))])
         volume_lower= 1/6*abs(np.linalg.det(mat_lower))
-        self.volumes = volume_upper+volume_lower
+        self.volume = 1
+#        self.volume = volume_upper+volume_lower

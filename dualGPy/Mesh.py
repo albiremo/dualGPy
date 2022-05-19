@@ -7,6 +7,7 @@ import itertools
 import time
 from dualGPy import Utils as ut 
 from dualGPy.Geometry import Face2D,Tetra,Hexa 
+from dualGPy.Graph import Graph2D
 from collections import defaultdict
 
 class Mesh(abc.ABC):
@@ -26,6 +27,8 @@ class Mesh(abc.ABC):
         self.onCorner  = []
         self.boundary_cells = []
         self.connectivity = {}
+
+
 
     @abc.abstractmethod
     def ComputeGeometry(self,points):        
@@ -136,6 +139,33 @@ class Mesh2D(Mesh) :
      ##draw the adjacency graph
      plt.savefig(string)
 
+    def draw_bnd(self,string,vector):
+     """Draw the mesh and the graph"""
+     plt.figure()
+     plt.axis('equal')
+    ### cycle on the elements
+     for i,elemento in enumerate(self.cells):
+      ### cycle on the point of the elements
+         print(i)
+     #to print numero cell
+     #    if i<100:
+     #     print("true")
+     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+         for i in range(len(elemento)):
+       ## # plot the grid
+           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
+           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
+           plt.plot(x_value,y_value,c='b')
+         #else:
+         # break  
+     for key,value in enumerate(vector):
+         x_line = self.centers[value][0]
+         y_line = self.centers[value][1]
+         plt.plot(x_line,y_line,c='r',marker="x")
+     ##draw the adjacency graph
+     plt.savefig(string)
+
+
 
     def draw_aggl_lines(self,string,lines_dict,xlim_min,xlim_max,ylim_min,ylim_max):
      """Draw the mesh and the graph"""
@@ -189,7 +219,28 @@ class Mesh2D(Mesh) :
             self.volume.append(cella.area)
             self.area.extend(cella.leng_segments)
             cell_points =[]
- 
+
+    def boundary_detection_Easy(self):
+      """ automatically determine the boundary condition, starting from the given graph
+         Right now we generate all the combination of possible faces and we see if they
+         are in the neightborhood. If they are not we print them out."""
+      # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
+      for k,v in self.connectivity.items():
+         connections = len(v)
+         num_boundaries = 4-connections
+         if (num_boundaries==1): 
+            self.onValley.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         elif ((num_boundaries)==2): 
+            self.onRidge.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         elif ((num_boundaries)>=3):
+            self.onCorner.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         else:
+            self.boundary_cells.append(np.int(0))
+
+
     def get_boundary_faces(self):
      """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
      dual["cells"] giving the indicies of all the cells of the dual mesh.
@@ -341,7 +392,6 @@ class Mesh3D(Mesh):
         # cycle on the indexes
             for index in cell:
         # accumulating the cell points
-                print(self.mesh.points[index])
                 cell_points.extend(self.mesh.points[index])
         # applying shoelace formul
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
