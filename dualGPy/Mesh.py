@@ -14,7 +14,8 @@ class Mesh(abc.ABC):
     """ Interface class to compute all the geometrical characteristics of the mesh """
     def __init__(self, mesh):
         self.mesh = mesh
-        self.cells = []  
+        self.cells = []
+        self.cell_type = []
         # non directional faces (in graph sense)
         self.faces = {}
         # Directional faces in graph sense
@@ -56,14 +57,31 @@ class Mesh(abc.ABC):
 
 class Mesh2D(Mesh) :
     
-    def __init__(self, mesh):
-        super().__init__(mesh)
-        self.setup_mesh()
-
+    def __init__(self, *args):
+       if len(args)==1:
+          mesh=args[0]
+       if len(args)>1:
+           points =[]
+           cells_test = []
+           n = args[0]
+           anisotropic = args[1]
+           if anisotropic == False :
+             for i in range(n):
+                for j in range(n):
+                   points.append([j,i])
+             for k,element in enumerate(points):
+                if (k+1)%n!=0 and (k < (len(points)-n)) :
+                  cells_test.append([k,k+1,n+k+1,n+k])
+             cells =[("quad",cells_test)]
+             mesh = meshio.Mesh(points,cells)
+       super().__init__(mesh)
+       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
+       self.setup_mesh()
     def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
           for j,f in enumerate(self.mesh.cells[i][1]):
            self.cells.append(self.mesh.cells[i][1][j])
+           self.cell_type.append(len(self.mesh.cells[i][1][j]))
         x_centerpoint=0
         y_centerpoint=0
         # initialization of the vector of all the centerpoints of the cells
@@ -227,7 +245,10 @@ class Mesh2D(Mesh) :
       # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
       for k,v in self.connectivity.items():
          connections = len(v)
-         num_boundaries = 4-connections
+         if (self.cell_type[k]==3):
+            num_boundaries = 3-connections
+         else: 
+            num_boundaries = 4-connections
          if (num_boundaries==1): 
             self.onValley.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
@@ -318,9 +339,29 @@ class Mesh2D(Mesh) :
 class Mesh3D(Mesh):  
     """ Implements the 3D mesh: ATTENTION! Right now only tetra supported, but flexible to implement also
         hexa and pyramids""" 
-    def __init__(self, mesh):
-        super().__init__(mesh)
-        self.setup_mesh()
+    def __init__(self, *args):
+       if len(args)==1:
+          mesh=args[0]
+       if len(args)>1:
+           points = []
+           cells_test = []
+           n = args[0]
+           anisotropic = args[1]
+           print(n,anisotropic)
+           if anisotropic == False :
+            for i in range(n):
+             for j in range(n):
+              for k in range(n):
+                points.append([k,j,i])
+            for fila in range(n-1):
+             for k in range(n*n):
+               if (k+1)%n!=0 and (k < (n*(n-1))) :
+                 cells_test.append([k+(fila*n*n),k+1+(fila*n*n),n+k+1+(fila*n*n),n+k+(fila*n*n),k+(n*n)+(fila*n*n),k+1+(n*n)+(fila*n*n),n+k+1+(n*n)+(fila*n*n),n+k+(n*n)+(fila*n*n)])
+            cells =[("hexahedron",cells_test)]
+            mesh = meshio.Mesh(points,cells)
+       super().__init__(mesh)
+       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
+       self.setup_mesh()
 
     def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
