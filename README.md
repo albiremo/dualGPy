@@ -16,6 +16,18 @@ The `Mesh` class has been developed as an abstact class to be specified for the 
 
 Built with the same philosophy of `Mesh` class it is able to operate and to build the CSR representation of the Adjacency Matrix.
 
+## Geometry class
+
+A hierarchy of geometrical object to treat the 2D and the 3D meshes. 
+
+## Utils 
+
+Useful utils for the pre and post processing (mesh management, like passing from a 3D to a 2D mesh and output printing)
+
+## Tests
+
+The tests are being run through the [Pytest](https://docs.pytest.org/en/7.1.x/contents.html) suite. If you want to add a test follow the format proposed.
+
 ## Examples
 
 to look at an example have a look to the `test.py` script.`
