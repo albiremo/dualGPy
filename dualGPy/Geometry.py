@@ -1,4 +1,4 @@
-import abc 
+import abc
 import numpy as np
 from numba import njit, prange
 
@@ -41,10 +41,10 @@ class Face2D(Face) :
         self.leng_segments = []
         super().__init__(*args, **kwargs)
         self.n_vertices = int(len(self.points)/2)
-     
+
     @staticmethod
     @njit
-    def algebric_area(points,shifted): 
+    def algebric_area(points,shifted):
         # TODO look if we should shift all to the father: alias to have a global method ComputeArea and re-structure the concept of interface base-class to a simple abstract class. The static method has been implemented to try to use Numba.
         area_0 = 0.5 * np.sum((shifted[:, 0] + points[:, 0])*(shifted[:, 1] - points[:, 1]))
         return area_0
@@ -54,7 +54,7 @@ class Face2D(Face) :
         shifted = np.roll(cell_points_reshaped, 1, axis=0)
         area_0 = self.algebric_area(cell_points_reshaped,shifted)
         self.area = abs(area_0)
-                  
+
     def ComputeLength(self,global_points):
         for segment in self.segments:
              leng = np.sqrt((global_points[segment[1]][1]-global_points[segment[0]][1])**2+(global_points[segment[1]][0]-global_points[segment[0]][0])**2)
@@ -64,7 +64,7 @@ class Face3D(Face) :
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.n_vertices = int(len(self.points)/3)
-        self.points_reshaped = np.reshape(self.points,(self.n_vertices,3))  
+        self.points_reshaped = np.reshape(self.points,(self.n_vertices,3))
         self.a = self.points_reshaped[0]
         self.b = self.points_reshaped[1]
         self.c = self.points_reshaped[2]
@@ -107,7 +107,7 @@ class Solid(abc.ABC):
         self.points = points
     # we can think to set it as a property
     # look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
-        self.AreaFaces = [] 
+        self.AreaFaces = []
         self.n_faces = int(len(self.Faces))
     @property
     def n_vertices(self):
@@ -172,7 +172,7 @@ class Tetra(Solid):
              for i,e in enumerate(faccia):
                  points.extend(global_points[e])
              faccia_el = Face3D(points)
-             faccia_el.ComputeArea() 
+             faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
              points = []
     def ComputeVolume(self):
@@ -196,7 +196,7 @@ class Hexa(Solid):
              for i,e in enumerate(faccia):
                  points.extend(global_points[e])
              faccia_el = Face3D(points)
-             faccia_el.ComputeArea() 
+             faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
              points = []
     def ComputeVolume(self):

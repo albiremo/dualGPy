@@ -1,20 +1,29 @@
-import abc 
+import abc
 import meshio
 import mypy
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 import time
-from dualGPy import Utils as ut 
-from dualGPy.Geometry import Face2D,Tetra,Hexa 
+from dualGPy import Utils as ut
+from dualGPy.Geometry import Face2D,Tetra,Hexa
 from dualGPy.Graph import Graph2D
 from collections import defaultdict
+from enum import IntEnum
+
+class CellType(IntEnum):
+    """Enum for cell types according to how many faces are on the boundary: interior, 0 faces; valley, 1; ridge, 2;
+    corner, 3."""
+    INTERIOR = 0
+    VALLEY   = 1
+    RIDGE    = 2
+    CORNER   = 3
 
 class Mesh(abc.ABC):
     """ Interface class to compute all the geometrical characteristics of the mesh """
     def __init__(self, mesh):
         self.mesh = mesh
-        self.cells = []  
+        self.cells = []
         # non directional faces (in graph sense)
         self.faces = {}
         # Directional faces in graph sense
@@ -31,7 +40,7 @@ class Mesh(abc.ABC):
 
 
     @abc.abstractmethod
-    def ComputeGeometry(self,points):        
+    def ComputeGeometry(self,points):
         """ compute the volume of the cells with respect to the dimensionality (2D area, 3D volume) """
         raise NotImplementedError
     @abc.abstractmethod
@@ -46,7 +55,7 @@ class Mesh(abc.ABC):
 
     @abc.abstractmethod
     def setup_mesh(self):
-        """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list. 
+        """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list.
         The method fills also the vector of the center points of the mesh.
         Results:
             - class.boundary faces
@@ -55,7 +64,7 @@ class Mesh(abc.ABC):
         raise NotImplementedError
 
 class Mesh2D(Mesh) :
-    
+
     def __init__(self, mesh):
         super().__init__(mesh)
         self.setup_mesh()
@@ -102,8 +111,8 @@ class Mesh2D(Mesh) :
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
            plt.plot(x_value,y_value,c='k')
          #else:
-         # break  
-     x1,x2,y1,y2 = plt.axis()  
+         # break
+     x1,x2,y1,y2 = plt.axis()
      plt.axis((0.0,0.25,-0.1,0.1))
      ##draw the adjacency graph
      plt.savefig(string)
@@ -126,7 +135,7 @@ class Mesh2D(Mesh) :
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
            plt.plot(x_value,y_value,c='b')
          #else:
-         # break  
+         # break
      x_line = []
      y_line = []
      for key,value in lines_dict.items():
@@ -157,7 +166,7 @@ class Mesh2D(Mesh) :
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
            plt.plot(x_value,y_value,c='b')
          #else:
-         # break  
+         # break
      for key,value in enumerate(vector):
          x_line = self.centers[value][0]
          y_line = self.centers[value][1]
@@ -184,7 +193,7 @@ class Mesh2D(Mesh) :
            y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
            plt.plot(x_value,y_value,c='b')
          #else:
-         # break  
+         # break
      x_line = []
      y_line = []
      for key,value in lines_dict.items():
@@ -194,7 +203,7 @@ class Mesh2D(Mesh) :
          plt.plot(x_line,y_line,linewidth=2.0,c='r')
          x_line = []
          y_line = []
-     x1,x2,y1,y2 = plt.axis()  
+     x1,x2,y1,y2 = plt.axis()
      plt.axis((xlim_min,xlim_max,ylim_min,ylim_max))
      ##draw the adjacency graph
      plt.savefig(string)
@@ -210,7 +219,7 @@ class Mesh2D(Mesh) :
             for index in cell:
         # accumulating the cell points
                 cell_points.extend(self.mesh.points[index])
-        # applying shoelace formul
+        # applying shoelace formula
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
             cella = Face2D(self.faces[i],cell_points)
@@ -223,21 +232,22 @@ class Mesh2D(Mesh) :
     def boundary_detection_Easy(self):
       """ automatically determine the boundary condition, starting from the given graph
          Right now we generate all the combination of possible faces and we see if they
-         are in the neightborhood. If they are not we print them out."""
-      # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
+         are in the neighborhood. If they are not we print them out."""
+      # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
       for k,v in self.connectivity.items():
          connections = len(v)
          num_boundaries = 4-connections
-         if (num_boundaries==1): 
+         if (num_boundaries == CellType.VALLEY):
             self.onValley.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
-         elif ((num_boundaries)==2): 
+         elif ((num_boundaries) == CellType.RIDGE):
             self.onRidge.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
-         elif ((num_boundaries)>=3):
+         elif ((num_boundaries) >= CellType.CORNER):
             self.onCorner.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
          else:
+            # interior
             self.boundary_cells.append(np.int(0))
 
 
@@ -247,19 +257,19 @@ class Mesh2D(Mesh) :
      """
      # Get the first set of points of the dual mesh
      d = ut.dict_of_indices(self.cells)
-     for i in range(len(self.cells)):
-       self.faces.update({i :[]}) 
-       self.Dfaces.update({i :[]}) 
-       self.connectivity.update({i :[]}) 
-     # cycle on the points 
+     # Initializing
+     self.faces = {i:[] for i in range(len(self.cells))}
+     self.Dfaces = {i:[] for i in range(len(self.cells))}
+     self.connectivity = {i:[] for i in range(len(self.cells))}
+     # cycle on the points
      for idx in range(len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-       # compliant_cells = ut.get_dual_points(self.cells, idx) 
-        compliant_cells = d[idx] 
+       # compliant_cells = ut.get_dual_points(self.cells, idx)
+        compliant_cells = d[idx]
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
-        # me create the list inter that check the common point between two vectors (that can have also different 
-        # dimension, considering that they can represent cells of completely different shape. 
+        # me create the list inter that check the common point between two vectors (that can have also different
+        # dimension, considering that they can represent cells of completely different shape.
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
         for i in compliant_cells:
@@ -269,7 +279,7 @@ class Mesh2D(Mesh) :
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
                if ((len(inter)>=2) and (inter not in self.faces[i]) and (inter not in self.faces[j])):
-                 self.Dfaces[i].append(inter) 
+                 self.Dfaces[i].append(inter)
                if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
@@ -279,8 +289,8 @@ class Mesh2D(Mesh) :
     def boundary_detection(self):
      """ automatically determine the boundary condition
          Right now we generate all the combination of possible faces and we see if they
-         are in the neightborhood. If they are not we print them out."""
-     # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
+         are in the neighborhood. If they are not we print them out."""
+     # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
      boundary_dict = {}
      for i in range(len(self.cells)):
         # initialize boundary dict
@@ -291,8 +301,8 @@ class Mesh2D(Mesh) :
         list_inter_boundary = list(map(list,inter_boundary))
         loop_boundary = list_inter_boundary.copy()
         # We create a copy of the list with copy method because we cannot remove elements from a list we are looping
-        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list   
-        # We check the presence of the iverted faces and we free the list of the boundaries.
+        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list
+        # We check the presence of the inverted faces and we free the list of the boundaries.
         for element in loop_boundary:
            for face_cell in self.faces[i]:
               if sorted(element) == sorted(face_cell):
@@ -303,21 +313,21 @@ class Mesh2D(Mesh) :
         # and build the on boundary vector
         num_diag = len(self.cells[i])*(len(self.cells[i])-3)/2
         num_boundaries = len(boundary_dict[i]) - num_diag
-        if (len(boundary_dict[i]) > num_diag) : 
+        if (len(boundary_dict[i]) > num_diag) :
             self.boundary_cells.append(np.int(num_boundaries))
-            if (num_boundaries == 1):
+            if (num_boundaries == CellType.VALLEY):
                 self.onValley.append(i)
-            elif (num_boundaries == 2):
+            elif (num_boundaries == CellType.RIDGE):
                 self.onRidge.append(i)
-            elif (num_boundaries>=3):
+            elif (num_boundaries >= CellType.CORNER):
                 self.onCorner.append(i)
         else:
             self.boundary_cells.append(np.int(0))
 
 
-class Mesh3D(Mesh):  
+class Mesh3D(Mesh):
     """ Implements the 3D mesh: ATTENTION! Right now only tetra supported, but flexible to implement also
-        hexa and pyramids""" 
+        hexa and pyramids"""
     def __init__(self, mesh):
         super().__init__(mesh)
         self.setup_mesh()
@@ -351,22 +361,22 @@ class Mesh3D(Mesh):
 
     def get_boundary_faces(self):
      """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
-     dual["cells"] giving the indicies of all the cells of the dual mesh.
+     dual["cells"] giving the indices of all the cells of the dual mesh.
      """
      # Get the first set of points of the dual mesh
      d = ut.dict_of_indices(self.cells)
-     for i in range(len(self.cells)):
-        self.faces.update({i :[]}) 
-        self.Dfaces.update({i :[]}) 
-        self.connectivity.update({i :[]}) 
-     # cycle on the points 
+     # Initializing
+     self.faces = {i:[] for i in range(len(self.cells))}
+     self.Dfaces = {i:[] for i in range(len(self.cells))}
+     self.connectivity = {i:[] for i in range(len(self.cells))}
+     # cycle on the points
      for idx in range(len(self.mesh.points)):
         # Get the dual mesh points for a given mesh vertex and the compliant cells to be analysed
-        compliant_cells = d[idx] 
+        compliant_cells = d[idx]
         # in this part we build the graph: for each point of the mesh we have the compliant cells
         # and we cycle over the compliant cells (two nested loop, with an if that avoids to inspect the same cell)
-        # me create the list inter that check the common point between two vectors (that can have also different 
-        # dimension, considering that they can represent cells of completely different shape. 
+        # me create the list inter that check the common point between two vectors (that can have also different
+        # dimension, considering that they can represent cells of completely different shape.
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
         for i in compliant_cells:
@@ -376,7 +386,7 @@ class Mesh3D(Mesh):
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
                if ((len(inter)>=3) and (inter not in self.faces[i]) and (inter not in self.faces[j])):
-                 self.Dfaces[i].append(inter) 
+                 self.Dfaces[i].append(inter)
                if ((len(inter)>=3) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
@@ -393,7 +403,7 @@ class Mesh3D(Mesh):
             for index in cell:
         # accumulating the cell points
                 cell_points.extend(self.mesh.points[index])
-        # applying shoelace formul
+        # applying shoelace formula
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
             if len(cell_points)==4:
@@ -405,12 +415,12 @@ class Mesh3D(Mesh):
             self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
             cell_points =[]
- 
+
     def boundary_detection(self):
      """ automatically determine the boundary condition
          Right now we generate all the combination of possible faces and we see if they
-         are in the neightborhood. If they are not we print them out."""
-     # define the dictionary of boundaries to determine later exactly the boundaty based on number of diagonals
+         are in the neighborhood. If they are not we print them out."""
+     # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
      boundary_dict = {}
      for i in range(len(self.cells)):
         # initialize boundary dict
@@ -421,7 +431,7 @@ class Mesh3D(Mesh):
         list_inter_boundary = list(map(list,inter_boundary))
         loop_boundary = list_inter_boundary.copy()
         # We create a copy of the list with copy method because we cannot remove elements from a list we are looping
-        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list   
+        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list
         # We check the presence of the inverted faces and we free the list of the boundaries.
         for element in loop_boundary:
            for face_cell in self.faces[i]:
@@ -430,15 +440,13 @@ class Mesh3D(Mesh):
         boundary_dict[i].extend(list_inter_boundary)
         # In case of tetra we do not have diagonals, hence given 3 points
         # we define exactly the boundary
-        num_boundaries = len(boundary_dict[i]) 
+        num_boundaries = len(boundary_dict[i])
         self.boundary_cells.append(np.int(num_boundaries))
-        if (num_boundaries == 1):
+        if (num_boundaries == CellType.VALLEY):
             self.onValley.append(i)
-        elif (num_boundaries == 2):
+        elif (num_boundaries == CellType.RIDGE):
             self.onRidge.append(i)
-        elif (num_boundaries>=3):
+        elif (num_boundaries >= CellType.CORNER):
             self.onCorner.append(i)
-        else:
-            self.boundary_cells.append(np.int(0))
 
 

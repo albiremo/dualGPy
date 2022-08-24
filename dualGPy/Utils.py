@@ -34,34 +34,34 @@ def convert_faces_to_cells(dictio,faces):
    risultato = []
    # final element to be added to the tuple of the elements for meshio
    elements_final = []
-   # actual analysed cell colletting the indices of all the faces composing it
+   # actual analysed cell collecting the indices of all the faces composing it
    cella = []
    # final element freed of double vertices
    cella_finale = []
    # cycle on the index
    for key,item in dictio.items():
-      for index in item:    
-   # I collect all the faces composing the cell in cella
+      for index in item:
+          # I collect all the faces composing the cell in cella
           cella.extend(faces[index])
-   #free the double values
+      #free the double values
       cella_finale=list(set(cella))
       elements_final.append(cella_finale)
-   #re-initialize cella
-      cella = [] 
+      #re-initialize cella
+      cella = []
    # version for homogeneous meshes, for multi element meshes
    # develop version with a for on elements_final and an append on the apposite
    # tetra or other element as has been done in the CGNS adapter
-   if len(cella_finale) == 4: 
+   if len(cella_finale) == 4:
       risultato.append(("tetra",elements_final))
-   #todo: to be impemented new elements
+   #todo: to be implemented new elements
    return(risultato)
 
 def dualize_mesh(points,cells,direc):
     """ Passing from a 3D to a 2D mesh in the desired direction (direc) """
-    # coordinate to suppress 
+    # coordinate to suppress
     z_del=points[0][direc]
     # correlation dictionary of the old index with the new one
-    corr = {}
+    corr = {i:[] for i in range(len(points))}
     # tmp to keep track of cell orderint
     tmp = []
     # final vector of new points
@@ -69,13 +69,13 @@ def dualize_mesh(points,cells,direc):
     # final list of cells
     new_cell = []
     # we build up the correlation
-    for i,point in enumerate(points):
-      corr.update({i:[]})
+    # for i,point in enumerate(points):
+      # corr.update({i:[]})
     for i,point in enumerate(points):
       print(i)
       # we create the key
-      # if the required direction of the 
-      # current point is different from the direction we want to delate
+      # if the required direction of the
+      # current point is different from the direction we want to delete
       # so we can append the new point to the vector of new points
       if point[direc] != z_del:
         deleted = np.delete(point,direc)
@@ -106,7 +106,7 @@ def dualize_mesh(points,cells,direc):
     polyg = []
     tri = []
     quad =[]
-    final = []     
+    final = []
     for i,cell in enumerate(new_cell):
       print("cell",cell)
       if len(cell)==3:
@@ -121,10 +121,10 @@ def dualize_mesh(points,cells,direc):
       final.append(("quad",quad))
     if polyg:
       final.append(("polygon",polyg))
-    return(new_point,final) 
+    return(new_point,final)
 
-    
-    
+
+
 def get_dual_points(compliant_cells, index ):
       """ Function that returns the points of the dual mesh nearest to the point in the mesh given by the index.
           Parameters:
@@ -133,39 +133,40 @@ def get_dual_points(compliant_cells, index ):
           index:      int
               Index of the point in the input mesh for which to calculate the nearest points of the dual mesh.
           Return:
-              compliant 
+              compliant
         # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
         # building the compliant cells list
-      """       
- 
+      """
+
 #     compliant = [i for i,e in enumerate(compliant_cells) if any_non_zero_values(e,index)]
- #     return compliant 
+ #     return compliant
+    raise NotImplementedError
 
 
 def address_agglomerated_cells(fc_to_cc_res,num_interval):
     """ Helper function to analyse the agglomeration in a Paraview environment, with
         a num_interval scale."""
     #initialize vector of fine cells
-    fine_cells = [np.float64(-1) for i in range(len(fc_to_cc_res))]
+    fine_cells = [np.float64(-1)] * len(fc_to_cc_res)
     #initialize touched flag
-    touched= [0 for i in range(len(fc_to_cc_res))]
+    touched= [False] * len(fc_to_cc_res)
     #create the marker
-    index = [i for i in range(num_interval)]
+    index = list(range(num_interval))
     #iterator to advance index
     i=0
     for j,cell_1 in enumerate(fc_to_cc_res):
          #assign riempi
          riempi = index[i]
          # if already touched advance
-         if (touched[j]==1):
+         if (touched[j]):
             continue
          for k,cell_2 in enumerate(fc_to_cc_res):
             if (cell_2 == cell_1):
-              #it means they are agglomerated together 
+              #it means they are agglomerated together
               # so fill
-              fine_cells[k]=np.float64(riempi)
+              fine_cells[k] = np.float64(riempi)
               # assign touched
-              touched[k]=1
+              touched[k] = True
          #cycle the iterator
          if riempi == index[-1]:
             i=0
