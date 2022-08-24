@@ -9,6 +9,7 @@ from dualGPy import Utils as ut
 from dualGPy.Geometry import Face2D,Tetra,Hexa
 from dualGPy.Graph import Graph2D
 from collections import defaultdict
+from itertools import product
 from enum import IntEnum
 
 class CellType(IntEnum):
@@ -74,15 +75,12 @@ class Mesh2D(Mesh) :
            cells_test = []
            n = args[0]
            anisotropic = args[1]
-           if anisotropic == False :
-             for i in range(n):
-                for j in range(n):
-                   points.append([j,i])
-             for k,element in enumerate(points):
+           points = [ [j,i] for i,j in product(range(n),range(n)) ]
+           for k,element in enumerate(points):
                 if (k+1)%n!=0 and (k < (len(points)-n)) :
                   cells_test.append([k,k+1,n+k+1,n+k])
-             cells =[("quad",cells_test)]
-             mesh = meshio.Mesh(points,cells)
+           cells =[("quad",cells_test)]
+           mesh = meshio.Mesh(points,cells)
        super().__init__(mesh)
        # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
        self.setup_mesh()

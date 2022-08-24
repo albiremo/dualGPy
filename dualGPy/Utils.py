@@ -137,10 +137,7 @@ def get_dual_points(compliant_cells, index ):
         # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell
         # building the compliant cells list
       """
-
-#     compliant = [i for i,e in enumerate(compliant_cells) if any_non_zero_values(e,index)]
- #     return compliant
-    raise NotImplementedError
+      raise NotImplementedError
 
 
 def address_agglomerated_cells(fc_to_cc_res,num_interval):
