@@ -37,10 +37,10 @@ class Coarse_mesh:
             # reordering of the points
             cent=(sum([p[0] for p in cell_points])/len(cell_points),sum([p[1] for p in cell_points])/len(cell_points))
             cell_points.sort(key=lambda p: np.arctan2(p[1]-cent[1],p[0]-cent[0]))
-           # renumbering of the coarse cell based on the new points vector 
+           # renumbering of the coarse cell based on the new points vector
             for i,value in enumerate(cell_points):
                coarse_cell_clean.append(cell_counter)
-               cell_counter+=1   
+               cell_counter+=1
             agglomerated_points.extend(cell_points)
             if len(coarse_cell_clean) not in dic_cells:
                dic_cells.update({len(coarse_cell_clean):[]})
@@ -48,5 +48,5 @@ class Coarse_mesh:
 
         cc = []
         for key,value in dic_cells.items():
-            cc.append(("polygon",value))        
+            cc.append(("polygon",value))
         return(d,agglomerated_points,cc)
