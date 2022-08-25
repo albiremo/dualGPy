@@ -106,9 +106,9 @@ class Mesh2D(Mesh) :
     def setup_mesh(self):
       """ Setup the mesh computing the cell center and parsing the cells and cell type in a more proper
           format with respect to meshio"""
-      for i,e in enumerate(self.mesh.cells):
-        self.cells.extend(self.mesh.cells[i][1])
-        self.cell_type.extend(map(len, self.mesh.cells[i][1]))
+      for cell in self.mesh.cells:
+          self.cells.extend(cell.data)
+          self.cell_type.extend(map(len, cell.data))
       # initialization of the vector of all the centerpoints of the cells
       self.centers = np.empty((len(self.cells), 2), dtype = np.float)
       for i, cell in enumerate(self.cells):
@@ -388,9 +388,9 @@ class Mesh3D(Mesh):
        self.setup_mesh()
 
     def setup_mesh(self):
-        for i,e in enumerate(self.mesh.cells):
-          self.cells.extend(self.mesh.cells[i][1])
-          self.cell_type.extend(map(len, self.mesh.cells[i][1]))
+        for cell in self.mesh.cells:
+          self.cells.extend(cell.data)
+          self.cell_type.extend(map(len, cell.data))
         # initialization of the vector of all the centerpoints of the cells
         self.centers = np.empty((len(self.cells), 3), dtype = np.float)
         for i, cell in enumerate(self.cells):
