@@ -21,9 +21,14 @@ class CellType(IntEnum):
     CORNER   = 3
 
 class Mesh(abc.ABC):
-    """ Interface class to compute all the geometrical characteristics of the mesh """
+    """ This is a class interface representing a generic Mesh, 2D or 3D. The :class:`Mesh` is a 
+        wrapper of the meshio object Mesh, containing methods to compute the area and volume (depending 
+        of the dimensionality of the problem (2D or 3D).
+        :param mesh: a :mod:`meshio` object  """
     def __init__(self, mesh):
         self.mesh = mesh
+        # the Cells are parsed from the meshio object in a simpler structure (TODO: maybe create a dictionary between
+        # cells and cell type
         self.cells = []
         self.cell_type = []
         # non directional faces (in graph sense)
@@ -47,12 +52,12 @@ class Mesh(abc.ABC):
         raise NotImplementedError
     @abc.abstractmethod
     def get_boundary_faces(self):
-        """ compute the Area of the faces of the cell with respect to the dimensionality """
+        """ compute the area of the faces of the cells with respect to the dimensionality (2D length of the segment, 3D area of the face) """
         raise NotImplementedError
 
     @abc.abstractmethod
     def boundary_detection(self):
-        """ compute the Area of the faces of the cell with respect to the dimensionality """
+        """ Run the detection of the connectivity (it verifies the neightborhood for each cell) and fills the dictionaries Dfaces and faces"""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -60,13 +65,22 @@ class Mesh(abc.ABC):
         """ Method that setup the elements to elaborate the graph and hence casts all the cells in a vector starting from a meshio.Mesh object. It fills the cells list of array and the boundary list.
         The method fills also the vector of the center points of the mesh.
         Results:
-            - class.boundary faces
-            - class.cells
-            - class.centers """
+            - class.cells : cells parsed in a list of list
+            - class.cell_type : number of point constituting the cell
+            - class.centers : centerpoint of each cell (useful for the post processing and visualizations) """
         raise NotImplementedError
 
 class Mesh2D(Mesh) :
-   
+    """ This is a concrete class representing a 2D mesh. The :class:`Mesh2D` derives from the :class:`Mesh` 
+      and contains  concrete methods coming from :class:`Mesh`.
+       
+      The constructor of the class takes a variadic list of arguments. It is possible or to give a :mod:`meshio` object (an external mesh
+      given in the datacard or 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 2D mesh
+      of squares (number of element in x will be the same of number of elements in y): 
+
+      :param n: number of elements in the 2D mesh 
+      :param anisotropic: or true or false it allows to introduce the anisotropicity in one direction
+    """ 
     def __init__(self, *args):
        if len(args)==1:
           mesh=args[0]
@@ -111,7 +125,8 @@ class Mesh2D(Mesh) :
 
 
     def draw_graph(self,string):
-     """Draw the mesh and the graph"""
+     """Draw the mesh and the undirected graph
+        :param string: string of the name of the figure produced"""
      plt.figure()
     ### cycle on the elements
      for i,elemento in enumerate(self.cells):
@@ -134,7 +149,10 @@ class Mesh2D(Mesh) :
      plt.savefig(string)
 
     def draw_aggl_lines_full(self,string,lines_dict):
-     """Draw the mesh and the graph"""
+     """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
+        input. This version is the one that plot the whole mesh.
+        :param string: string of the name of the figure produced
+        :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line"""
      plt.figure()
      plt.axis('equal')
     ### cycle on the elements
@@ -165,7 +183,10 @@ class Mesh2D(Mesh) :
      plt.savefig(string)
 
     def draw_bnd(self,string,vector):
-     """Draw the mesh and the graph"""
+     """Draw the mesh and the priority boundaries (for the agglomeration) 
+        :param string: string of the name of the figure produced
+        :param vector: vector of the boundaries to draw
+        """
      plt.figure()
      plt.axis('equal')
     ### cycle on the elements
@@ -193,7 +214,14 @@ class Mesh2D(Mesh) :
 
 
     def draw_aggl_lines(self,string,lines_dict,xlim_min,xlim_max,ylim_min,ylim_max):
-     """Draw the mesh and the graph"""
+     """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
+        input. This version is the one that plot a window on the mesh.
+        :param string: string of the name of the figure produced
+        :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line
+        :param xlim_min: minimum x to plot
+        :param xlim_max: maximum x to plot
+        :param ylim_min: minimum y to plot
+        :param ylim_max: maximum y to plot"""
      plt.figure()
     ### cycle on the elements
      for i,elemento in enumerate(self.cells):
