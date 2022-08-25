@@ -10,7 +10,7 @@ Welcome to DualGPy's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   README.md
+   intro.md
 
    modules
 
