@@ -42,23 +42,24 @@ class Mesh(abc.ABC):
         self.onRidge  = []
         self.onCorner  = []
         self.boundary_cells = []
-        # connectivity dictionary. For each cell (key) we have the associated list of the connected cells. (in this case we use the non directed graph and hence if 0 is connected for example with 1, even the 1 will be connected with 0 and hence key and values will be present in both).
+        # connectivity dictionary. 
+        #For each cell (key) we have the associated list of the connected cells. (in this case we use the non directed graph and hence if 0 is connected for example with 1, even the 1 will be connected with 0 and hence key and values will be present in both).
         self.connectivity = {}
 
 
 
     @abc.abstractmethod
-    def ComputeGeometry(self,points):
-        """ compute the volume of the cells with respect to the dimensionality (2D area, 3D volume) """
+    def ComputeGeometry(self):
+        """ compute the area of the faces and the volume of the cells with respect to the dimensionality (2D area + segment , 3D volume + area) filling the area and volume member variables. This method should be always called after the get_boundary_faces method (a previous utilization can bring to catastrophic mistakes). """
         raise NotImplementedError
     @abc.abstractmethod
     def get_boundary_faces(self):
-        """ compute the area of the faces of the cells with respect to the dimensionality (2D length of the segment, 3D area of the face) """
+        """ Run the detection of the connectivity (it verifies the neightborhood for each cell) and fills the dictionaries Dfaces and faces, identifying the faces owned by each cell in a directed or not directed graph fashion."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def boundary_detection(self):
-        """ Run the detection of the connectivity (it verifies the neightborhood for each cell) and fills the dictionaries Dfaces and faces"""
+        """ Detects the boundaries of the mesh, by identifying for the boundary cells how many faces are on the boundary (see the onValley, onRidge and onCorner enum). Last but not the least it fills the boundary_cells dictionary (key: cell id, value: number of cells on boundaries."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -83,6 +84,9 @@ class Mesh2D(Mesh) :
       :param anisotropic: or true or false it allows to introduce the anisotropicity in one direction
     """ 
     def __init__(self, *args):
+       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable. Implementation of a variadic 
+       # formulation passing to the interface the mesh here constructed or the one taken as
+       # input
        if len(args)==1:
           mesh=args[0]
        if len(args)>1:
@@ -97,16 +101,18 @@ class Mesh2D(Mesh) :
            cells =[("quad",cells_test)]
            mesh = meshio.Mesh(points,cells)
        super().__init__(mesh)
-       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
        self.setup_mesh()
+
     def setup_mesh(self):
-        for i,e in enumerate(self.mesh.cells):
-          self.cells.extend(self.mesh.cells[i][1])
-          self.cell_type.extend(map(len, self.mesh.cells[i][1]))
-        # initialization of the vector of all the centerpoints of the cells
-        self.centers = np.empty((len(self.cells), 2), dtype = np.float)
-        for i, cell in enumerate(self.cells):
-            self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
+      """ Setup the mesh computing the cell center and parsing the cells and cell type in a more proper
+          format with respect to meshio"""
+      for i,e in enumerate(self.mesh.cells):
+        self.cells.extend(self.mesh.cells[i][1])
+        self.cell_type.extend(map(len, self.mesh.cells[i][1]))
+      # initialization of the vector of all the centerpoints of the cells
+      self.centers = np.empty((len(self.cells), 2), dtype = np.float)
+      for i, cell in enumerate(self.cells):
+          self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
 
 
@@ -234,12 +240,11 @@ class Mesh2D(Mesh) :
          y_line = []
      x1,x2,y1,y2 = plt.axis()
      plt.axis((xlim_min,xlim_max,ylim_min,ylim_max))
-     ##draw the adjacency graph
      plt.savefig(string)
 
 
     def ComputeGeometry(self):
-        """ In the case of the 2D class it will be an Area """
+        """ Specific implementation of the correspective method in :class:`Mesh`."""
         # points of the specific cell
         cell_points=[]
         # cycle on the cells
@@ -262,13 +267,17 @@ class Mesh2D(Mesh) :
       """ automatically determine the boundary condition, starting from the given graph
          Right now we generate all the combination of possible faces and we see if they
          are in the neighborhood. If they are not we print them out."""
-      # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
+
+      # we cycle on the connectivity dictionary where for each cell we have the connected cells.
+      # in that way we can determine the number of missing connections that are the one on the boundary
       for k,v in self.connectivity.items():
          connections = len(v)
 
          if (self.cell_type[k]==3):
+            # case of triangle
             num_boundaries = 3-connections
-         else: 
+         else:
+            # case of square 
             num_boundaries = 4-connections
          if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
@@ -279,11 +288,11 @@ class Mesh2D(Mesh) :
          elif ((num_boundaries) >= CellType.CORNER):
             self.onCorner.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
+         else:
+            self.boundary_cells.append(np.int(num_boundaries))
 
     def get_boundary_faces(self):
-     """ Returns the dual mesh held in a dictionary Graph with dual["points"] giving the coordinates and
-     dual["cells"] giving the indicies of all the cells of the dual mesh.
-     """
+     """ Specific implementation of the abstract method in :class:`Mesh`."""
      # Get the first set of points of the dual mesh
      d = ut.dict_of_indices(self.cells)
      # Initializing
