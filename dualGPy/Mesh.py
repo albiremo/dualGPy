@@ -390,6 +390,7 @@ class Mesh3D(Mesh):
     def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
           self.cells.extend(self.mesh.cells[i][1])
+          self.cell_type.extend(map(len, self.mesh.cells[i][1]))
         # initialization of the vector of all the centerpoints of the cells
         self.centers = np.empty((len(self.cells), 3), dtype = np.float)
         for i, cell in enumerate(self.cells):
@@ -498,10 +499,10 @@ class Mesh3D(Mesh):
 
          if (self.cell_type[k]==8):
             # case of hexa
-            num_boundaries = 8-connections
-         else:
-            # case of tetra 
             num_boundaries = 6-connections
+         else:
+            # case of tetra
+            num_boundaries = 4-connections
          if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
