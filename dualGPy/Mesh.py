@@ -486,4 +486,33 @@ class Mesh3D(Mesh):
         elif (num_boundaries >= CellType.CORNER):
             self.onCorner.append(i)
 
+    def boundary_detection_Easy(self):
+      """ automatically determine the boundary condition, starting from the given graph
+         Right now we generate all the combination of possible faces and we see if they
+         are in the neighborhood. If they are not we print them out."""
+
+      # we cycle on the connectivity dictionary where for each cell we have the connected cells.
+      # in that way we can determine the number of missing connections that are the one on the boundary
+      for k,v in self.connectivity.items():
+         connections = len(v)
+
+         if (self.cell_type[k]==8):
+            # case of hexa
+            num_boundaries = 8-connections
+         else:
+            # case of tetra 
+            num_boundaries = 6-connections
+         if (num_boundaries==CellType.VALLEY):
+            self.onValley.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         elif ((num_boundaries) == CellType.RIDGE):
+            self.onRidge.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         elif ((num_boundaries) >= CellType.CORNER):
+            self.onCorner.append(k)
+            self.boundary_cells.append(np.int(num_boundaries))
+         else:
+            self.boundary_cells.append(np.int(num_boundaries))
+
+
 
