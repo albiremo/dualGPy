@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dualGPy.Utils &#8212; DualGPy 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for dualGPy.Utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">njit</span><span class="p">,</span> <span class="n">prange</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+
+<div class="viewcode-block" id="dict_of_indices"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.dict_of_indices">[docs]</a><span class="k">def</span> <span class="nf">dict_of_indices</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">l</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+<span class="c1"># http://www.katrin-affolter.ch/Python/performance_of_all_and_any</span>
+<div class="viewcode-block" id="any_non_zero_values"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.any_non_zero_values">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">any_non_zero_values</span><span class="p">(</span><span class="n">elements</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+
+    <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">el</span> <span class="o">==</span> <span class="n">index</span><span class="p">:</span>
+
+            <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="convert_faces_to_cells"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.convert_faces_to_cells">[docs]</a><span class="k">def</span> <span class="nf">convert_faces_to_cells</span><span class="p">(</span><span class="n">dictio</span><span class="p">,</span><span class="n">faces</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Convert the dictionary created in the CGNS reading</span>
+<span class="sd">      in a 3D Volume mesh starting from the faces given</span>
+<span class="sd">      in the dictionary as input &quot;&quot;&quot;</span>
+   <span class="c1"># boundary values</span>
+   <span class="c1"># the first key of the dictionary contains all the faces that has</span>
+   <span class="c1"># a boundary value</span>
+   <span class="k">del</span> <span class="n">dictio</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+   <span class="c1"># final result to pass to the meshio input</span>
+   <span class="n">risultato</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="c1"># final element to be added to the tuple of the elements for meshio</span>
+   <span class="n">elements_final</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="c1"># actual analysed cell collecting the indices of all the faces composing it</span>
+   <span class="n">cella</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="c1"># final element freed of double vertices</span>
+   <span class="n">cella_finale</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="c1"># cycle on the index</span>
+   <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">item</span> <span class="ow">in</span> <span class="n">dictio</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+          <span class="c1"># I collect all the faces composing the cell in cella</span>
+          <span class="n">cella</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">faces</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+      <span class="c1">#free the double values</span>
+      <span class="n">cella_finale</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cella</span><span class="p">))</span>
+      <span class="n">elements_final</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cella_finale</span><span class="p">)</span>
+      <span class="c1">#re-initialize cella</span>
+      <span class="n">cella</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="c1"># version for homogeneous meshes, for multi element meshes</span>
+   <span class="c1"># develop version with a for on elements_final and an append on the apposite</span>
+   <span class="c1"># tetra or other element as has been done in the CGNS adapter</span>
+   <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cella_finale</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+      <span class="n">risultato</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;tetra&quot;</span><span class="p">,</span><span class="n">elements_final</span><span class="p">))</span>
+   <span class="c1">#todo: to be implemented new elements</span>
+   <span class="k">return</span><span class="p">(</span><span class="n">risultato</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dualize_mesh"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.dualize_mesh">[docs]</a><span class="k">def</span> <span class="nf">dualize_mesh</span><span class="p">(</span><span class="n">points</span><span class="p">,</span><span class="n">cells</span><span class="p">,</span><span class="n">direc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Passing from a 3D to a 2D mesh in the desired direction (direc) &quot;&quot;&quot;</span>
+    <span class="c1"># coordinate to suppress</span>
+    <span class="n">z_del</span><span class="o">=</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">direc</span><span class="p">]</span>
+    <span class="c1"># correlation dictionary of the old index with the new one</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))}</span>
+    <span class="c1"># tmp to keep track of cell orderint</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># final vector of new points</span>
+    <span class="n">new_point</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># final list of cells</span>
+    <span class="n">new_cell</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># we build up the correlation</span>
+    <span class="c1"># for i,point in enumerate(points):</span>
+      <span class="c1"># corr.update({i:[]})</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">point</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+      <span class="c1"># we create the key</span>
+      <span class="c1"># if the required direction of the</span>
+      <span class="c1"># current point is different from the direction we want to delete</span>
+      <span class="c1"># so we can append the new point to the vector of new points</span>
+      <span class="k">if</span> <span class="n">point</span><span class="p">[</span><span class="n">direc</span><span class="p">]</span> <span class="o">!=</span> <span class="n">z_del</span><span class="p">:</span>
+        <span class="n">deleted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">point</span><span class="p">,</span><span class="n">direc</span><span class="p">)</span>
+        <span class="n">new_point</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span>
+    <span class="c1"># we append to the correlation vector the new index of the point</span>
+    <span class="c1"># that is the value of the length - 1</span>
+        <span class="n">corr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_point</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># we proceed with the cells</span>
+    <span class="n">marker</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
+      <span class="nb">print</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">cell</span><span class="p">:</span>
+    <span class="c1"># if it exist the correspective it means that</span>
+    <span class="c1"># the point has been renumbered and it exist</span>
+        <span class="k">if</span> <span class="n">corr</span><span class="p">[</span><span class="n">point</span><span class="p">]:</span>
+          <span class="n">tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">[</span><span class="n">point</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1">#        else:</span>
+<span class="c1">#          print(&quot;m1&quot;)</span>
+<span class="c1">#          marker = 1</span>
+<span class="c1">#      print(&quot;rmp&quot;,tmp)</span>
+    <span class="c1"># if marker is 0 it means that there are no problematic</span>
+    <span class="c1"># points so tmp has been created with ht new index</span>
+      <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">new_cell</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+    <span class="c1"># reinitialize temp and marker</span>
+      <span class="n">tmp</span><span class="o">=</span><span class="p">[]</span>
+      <span class="n">marker</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">polyg</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">tri</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">quad</span> <span class="o">=</span><span class="p">[]</span>
+    <span class="n">final</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_cell</span><span class="p">):</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cell&quot;</span><span class="p">,</span><span class="n">cell</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+         <span class="n">tri</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span><span class="p">:</span>
+         <span class="n">quad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+         <span class="n">polyg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tri</span><span class="p">:</span>
+      <span class="n">final</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;triangle&quot;</span><span class="p">,</span><span class="n">tri</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">quad</span><span class="p">:</span>
+      <span class="n">final</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;quad&quot;</span><span class="p">,</span><span class="n">quad</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">polyg</span><span class="p">:</span>
+      <span class="n">final</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;polygon&quot;</span><span class="p">,</span><span class="n">polyg</span><span class="p">))</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">new_point</span><span class="p">,</span><span class="n">final</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_dual_points"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.get_dual_points">[docs]</a><span class="k">def</span> <span class="nf">get_dual_points</span><span class="p">(</span><span class="n">compliant_cells</span><span class="p">,</span> <span class="n">index</span> <span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot; Function that returns the points of the dual mesh nearest to the point in the mesh given by the index.</span>
+<span class="sd">          Parameters:</span>
+<span class="sd">          mesh:       meshio.Mesh object</span>
+<span class="sd">              Input mesh.</span>
+<span class="sd">          index:      int</span>
+<span class="sd">              Index of the point in the input mesh for which to calculate the nearest points of the dual mesh.</span>
+<span class="sd">          Return:</span>
+<span class="sd">              compliant</span>
+<span class="sd">        # Find the cells where the given index appears, REMEMBER the where statement gives you immediately back the indexof the compliant cell</span>
+<span class="sd">        # building the compliant cells list</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+      <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="address_agglomerated_cells"><a class="viewcode-back" href="../../dualGPy.html#dualGPy.Utils.address_agglomerated_cells">[docs]</a><span class="k">def</span> <span class="nf">address_agglomerated_cells</span><span class="p">(</span><span class="n">fc_to_cc_res</span><span class="p">,</span><span class="n">num_interval</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Helper function to analyse the agglomeration in a Paraview environment, with</span>
+<span class="sd">        a num_interval scale.&quot;&quot;&quot;</span>
+    <span class="c1">#initialize vector of fine cells</span>
+    <span class="n">fine_cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">fc_to_cc_res</span><span class="p">)</span>
+    <span class="c1">#initialize touched flag</span>
+    <span class="n">touched</span><span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">fc_to_cc_res</span><span class="p">)</span>
+    <span class="c1">#create the marker</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_interval</span><span class="p">))</span>
+    <span class="c1">#iterator to advance index</span>
+    <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">cell_1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fc_to_cc_res</span><span class="p">):</span>
+         <span class="c1">#assign riempi</span>
+         <span class="n">riempi</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+         <span class="c1"># if already touched advance</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">touched</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+            <span class="k">continue</span>
+         <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">cell_2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fc_to_cc_res</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">cell_2</span> <span class="o">==</span> <span class="n">cell_1</span><span class="p">):</span>
+              <span class="c1">#it means they are agglomerated together</span>
+              <span class="c1"># so fill</span>
+              <span class="n">fine_cells</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">riempi</span><span class="p">)</span>
+              <span class="c1"># assign touched</span>
+              <span class="n">touched</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+         <span class="c1">#cycle the iterator</span>
+         <span class="k">if</span> <span class="n">riempi</span> <span class="o">==</span> <span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+         <span class="k">else</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">fine_cells</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">DualGPy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">dualGPy</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Alberto Remigi.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
