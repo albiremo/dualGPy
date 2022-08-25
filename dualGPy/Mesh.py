@@ -35,7 +35,7 @@ class Mesh(abc.ABC):
         self.faces = {}
         # Directional faces in graph sense
         self.Dfaces ={}
-        self.centers = []
+        self.centers = None
         self.volume = []
         self.area = []
         self.onValley  = []
@@ -100,26 +100,12 @@ class Mesh2D(Mesh) :
        self.setup_mesh()
     def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
-          for j,f in enumerate(self.mesh.cells[i][1]):
-           self.cells.append(self.mesh.cells[i][1][j])
-           self.cell_type.append(len(self.mesh.cells[i][1][j]))
-        x_centerpoint=0
-        y_centerpoint=0
+          self.cells.extend(self.mesh.cells[i][1])
+          self.cell_type.extend(map(len, self.mesh.cells[i][1]))
         # initialization of the vector of all the centerpoints of the cells
-        for elemento in self.cells:
-        # cycle on the point of the elements
-           for i in range(len(elemento)):
-        # compute the centerpoint (accumulating)
-             x_centerpoint += self.mesh.points[elemento[i],0]
-             y_centerpoint += self.mesh.points[elemento[i],1]
-        # define the center point
-           x_centerpoint/=len(elemento)
-           y_centerpoint/=len(elemento)
-        #  append to the centerpoints vector the element computed
-           self.centers.append([x_centerpoint,y_centerpoint])
-        #  re-initialize the accumulation vectors
-           x_centerpoint=0
-           y_centerpoint=0
+        self.centers = np.empty((len(self.cells), 2), dtype = np.float)
+        for i, cell in enumerate(self.cells):
+            self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
 
 
@@ -174,8 +160,8 @@ class Mesh2D(Mesh) :
      y_line = []
      for key,value in lines_dict.items():
          for cell in value:
-             x_line.append(self.centers[cell][0])
-             y_line.append(self.centers[cell][1])
+             x_line.append(self.centers[cell,0])
+             y_line.append(self.centers[cell,1])
          plt.plot(x_line,y_line,linewidth=2.0,c='r')
          x_line = []
          y_line = []
@@ -205,9 +191,7 @@ class Mesh2D(Mesh) :
          #else:
          # break
      for key,value in enumerate(vector):
-         x_line = self.centers[value][0]
-         y_line = self.centers[value][1]
-         plt.plot(x_line,y_line,c='r',marker="x")
+         plt.plot(*self.centers[value,:],c='r',marker="x")
      ##draw the adjacency graph
      plt.savefig(string)
 
@@ -285,7 +269,7 @@ class Mesh2D(Mesh) :
             num_boundaries = 3-connections
          else: 
             num_boundaries = 4-connections
-         if (num_boundaries==CellType.VALLEY): 
+         if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
          elif ((num_boundaries) == CellType.RIDGE):
@@ -382,10 +366,7 @@ class Mesh3D(Mesh):
            anisotropic = args[1]
            print(n,anisotropic)
            if anisotropic == False :
-            for i in range(n):
-             for j in range(n):
-              for k in range(n):
-                points.append([k,j,i])
+            points = [ [k,j,i] for i,j,k in product(range(n), range(n), range(n)) ]
             for fila in range(n-1):
              for k in range(n*n):
                if (k+1)%n!=0 and (k < (n*(n-1))) :
@@ -398,29 +379,12 @@ class Mesh3D(Mesh):
 
     def setup_mesh(self):
         for i,e in enumerate(self.mesh.cells):
-          for j,f in enumerate(self.mesh.cells[i][1]):
-           self.cells.append(self.mesh.cells[i][1][j])
-        x_centerpoint=0
-        y_centerpoint=0
-        z_centerpoint=0
+        for i,e in enumerate(self.mesh.cells):
+          self.cells.extend(self.mesh.cells[i][1])
         # initialization of the vector of all the centerpoints of the cells
-        for elemento in self.cells:
-        # cycle on the point of the elements
-           for i in range(len(elemento)):
-        # compute the centerpoint (accumulating)
-             x_centerpoint += self.mesh.points[elemento[i],0]
-             y_centerpoint += self.mesh.points[elemento[i],1]
-             z_centerpoint += self.mesh.points[elemento[i],2]
-        # define the center point
-           x_centerpoint/=len(elemento)
-           y_centerpoint/=len(elemento)
-           z_centerpoint/=len(elemento)
-        #  append to the centerpoints vector the element computed
-           self.centers.append([x_centerpoint,y_centerpoint,z_centerpoint])
-        #  re-initialize the accumulation vectors
-           x_centerpoint=0
-           y_centerpoint=0
-           z_centerpoint=0
+        self.centers = np.empty((len(self.cells), 3), dtype = np.float)
+        for i, cell in enumerate(self.cells):
+            self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
 
     def get_boundary_faces(self):
