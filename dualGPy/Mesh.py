@@ -31,9 +31,9 @@ class Mesh(abc.ABC):
         # cells and cell type
         self.cells = []
         self.cell_type = []
-        # non directional faces (in graph sense)
+        # non directional faces (in graph sense), hence  a dictionary that associates to each cell a list of faces that are neighborhood with other faces (WARNING: faces that are at the boundary are not considered, they are not shared with any other cell.
         self.faces = {}
-        # Directional faces in graph sense
+        # Directional faces in graph sense. It means that the same face will be present only in one of the cells that are sharing it and not in both as in Faces 
         self.Dfaces ={}
         self.centers = None
         self.volume = []
@@ -42,6 +42,7 @@ class Mesh(abc.ABC):
         self.onRidge  = []
         self.onCorner  = []
         self.boundary_cells = []
+        # connectivity dictionary. For each cell (key) we have the associated list of the connected cells. (in this case we use the non directed graph and hence if 0 is connected for example with 1, even the 1 will be connected with 0 and hence key and values will be present in both).
         self.connectivity = {}
 
 
@@ -378,7 +379,6 @@ class Mesh3D(Mesh):
        self.setup_mesh()
 
     def setup_mesh(self):
-        for i,e in enumerate(self.mesh.cells):
         for i,e in enumerate(self.mesh.cells):
           self.cells.extend(self.mesh.cells[i][1])
         # initialization of the vector of all the centerpoints of the cells
