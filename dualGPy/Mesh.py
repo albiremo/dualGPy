@@ -93,6 +93,8 @@ class Mesh2D(Mesh) :
            points =[]
            cells_test = []
            n = args[0]
+           if n < 2:
+               raise ValueError(f'Number of nodes per edge should be at least 2 (got {n})')
            anisotropic = args[1]
            points = [ [j,i] for i,j in product(range(n),range(n)) ]
            if anisotropic:
@@ -371,6 +373,8 @@ class Mesh3D(Mesh):
            points = []
            cells_test = []
            n = args[0]
+           if n < 2:
+               raise ValueError(f'Number of nodes per edge should be at least 2 (got {n})')
            anisotropic = args[1]
            points = [ [k,j,i] for i,j,k in product(range(n), range(n), range(n)) ]
            if anisotropic:
