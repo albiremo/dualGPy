@@ -457,14 +457,12 @@ class Mesh3D(Mesh):
             if len(cell_points)==12: #4*3
                cella = Tetra(cell_points,self.faces[i])
             else:
-               print("hexa")
                cella= Hexa(cell_points,self.faces[i])
             cella.ComputeArea(self.mesh.points)
             cella.ComputeVolume()
 #            self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
             cell_points =[]
-        print(self.area)
     def boundary_detection(self):
      """ automatically determine the boundary condition
          Right now we generate all the combination of possible faces and we see if they

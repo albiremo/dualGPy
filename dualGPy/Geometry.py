@@ -64,7 +64,6 @@ class Face3D(Face) :
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.n_vertices = int(len(self.points)/3)
-        print("vertici",self.n_vertices)
         self.points_reshaped = np.reshape(self.points,(self.n_vertices,3))
         self.a = self.points_reshaped[0]
         self.b = self.points_reshaped[1]
@@ -194,9 +193,7 @@ class Hexa(Solid):
              for i,e in enumerate(faccia):
                  points.extend(global_points[e])
              faccia_el = Face3D(points)
-             print("punti",points)
              faccia_el.ComputeArea()
-             print("area",faccia_el.area)
              self.AreaFaces.append(faccia_el.area)
              points = []
     def ComputeVolume(self):
