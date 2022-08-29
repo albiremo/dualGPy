@@ -252,22 +252,14 @@ class Mesh2D(Mesh) :
     def ComputeGeometry(self):
         """ Specific implementation of the correspective method in :class:`Mesh`."""
         # points of the specific cell
-        cell_points=[]
         # cycle on the cells
         for i,cell in enumerate(self.cells):
-        # cycle on the indexes
-            for index in cell:
-        # accumulating the cell points
-                cell_points.extend(self.mesh.points[index])
         # applying shoelace formula
-        # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
-        # 2. apply the shoelace
-            cella = Face2D(self.faces[i],cell_points)
+            cella = Face2D(self.faces[i], self.mesh.points[cell, :])
             cella.ComputeArea()
             cella.ComputeLength(self.mesh.points)
             self.volume.append(cella.area)
             self.area.extend(cella.leng_segments)
-            cell_points =[]
 
     def boundary_detection_Easy(self):
       """ automatically determine the boundary condition, starting from the given graph
@@ -442,27 +434,19 @@ class Mesh3D(Mesh):
 
 
     def ComputeGeometry(self):
-        """ In the case of the 2D class it will be an Area """
+        """ In the case of the 3D class it will be an Area """
         # points of the specific cell
-        cell_points=[]
         # cycle on the cells
         for i,cell in enumerate(self.cells):
-        # cycle on the indexes
-            for index in cell:
-        # accumulating the cell points
-                cell_points.extend(self.mesh.points[index])
         # applying shoelace formula
-        # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
-        # 2. apply the shoelace
-            if len(cell_points)==12: #4*3
-               cella = Tetra(cell_points,self.faces[i])
+            if len(cell) == 4:
+               cella = Tetra(self.mesh.points[cell, :],self.faces[i])
             else:
-               cella= Hexa(cell_points,self.faces[i])
+               cella = Hexa(self.mesh.points[cell, :],self.faces[i])
             cella.ComputeArea(self.mesh.points)
             cella.ComputeVolume()
 #            self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
-            cell_points =[]
     def boundary_detection(self):
      """ automatically determine the boundary condition
          Right now we generate all the combination of possible faces and we see if they
