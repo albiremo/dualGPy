@@ -200,7 +200,29 @@ class Hexa(Solid):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
 #        mat = self.points
-        mat_diag=np.reshape(self.points,(self.n_vertices,3)).transpose()
+        points_reshaped=np.reshape(self.points,(self.n_vertices,3))
+        diag_add = np.array([[1,0,0,0,1],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,1],[0,0,0,1,0],[0,0,1,0,1],[0,1,0,0,1],[1,0,0,0,0]])
+        mat_diag =  np.concatenate((diag_add,points_reshaped), axis = 1)
+        one_column = np.ones((4,1))
+        a0 = points_reshaped[0]
+        a1 = points_reshaped[1]
+        a2 = points_reshaped[2]
+        a3 = points_reshaped[3]
+        a4 = points_reshaped[4]
+        a5 = points_reshaped[5]
+        a6 = points_reshaped[6] 
+        a7 = points_reshaped[7]
+        delta0356 = np.concatenate((one_column,np.vstack((a0,a3,a5,a6))),axis=1)
+        delta1247 = np.concatenate((one_column,np.vstack((a1,a2,a4,a7))),axis=1)
+#        self.volume = abs((np.linalg.det(mat_diag)+np.linalg.det(delta0356)-np.linalg.det(delta1247))/12)
+        print(mat_diag)
+        print(delta0356)
+        print(delta1247)
+ 
+        print(np.linalg.det(mat_diag))
+        print(np.linalg.det(delta0356))
+        print(np.linalg.det(delta1247))
+        self.volume=1
 #        mat_1=np.reshape(mat_half,(3,8)).transpose()
 #        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
 #        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
