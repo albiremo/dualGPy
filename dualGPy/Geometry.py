@@ -64,6 +64,7 @@ class Face3D(Face) :
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.n_vertices = int(len(self.points)/3)
+        print("vertici",self.n_vertices)
         self.points_reshaped = np.reshape(self.points,(self.n_vertices,3))
         self.a = self.points_reshaped[0]
         self.b = self.points_reshaped[1]
@@ -80,24 +81,21 @@ class Face3D(Face) :
              [self.b[0],self.b[1],1],
              [self.c[0],self.c[1],1]])
         magnitude = (x**2 + y**2 + z**2)**.5
-        if (magnitude==0):
-           magnitude = 1e-3
+        #if (magnitude==0):
+        #   magnitude = 1e-3
         return ([x/magnitude, y/magnitude, z/magnitude])
 
     def ComputeArea(self):
         #https://stackoverflow.com/questions/12642256/find-area-of-polygon-from-xyz-coordinates
-        normal = self.unit_normal()
-        rolled = np.roll(self.points_reshaped,1,axis=0)
-      #  total = np.array([])
-        total = np.zeros((1,3))
-        for i in range(len(self.points_reshaped)):
-            product = np.cross(self.points_reshaped[i],rolled[i])
-            total = np.add(total,product)
-        area_0 = np.dot(total,normal)
-        if abs(area_0 == 0):
-           area_0 = 1e-3
-        self.area = abs(area_0/2)
-
+        #shape (N, 3)
+        poly = self.points_reshaped
+        #all edges
+        edges = poly[1:] - poly[0:1]
+        # row wise cross product
+        cross_product = np.cross(edges[:-1],edges[1:], axis=1)
+        #area of all triangles
+        area = np.linalg.norm(cross_product, axis=1)/2
+        self.area = sum(area)
 
 class Solid(abc.ABC):
     """ Interface class to compute the different characteristics of an element of
@@ -196,21 +194,22 @@ class Hexa(Solid):
              for i,e in enumerate(faccia):
                  points.extend(global_points[e])
              faccia_el = Face3D(points)
+             print("punti",points)
              faccia_el.ComputeArea()
+             print("area",faccia_el.area)
              self.AreaFaces.append(faccia_el.area)
              points = []
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
-        # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
-        # here we split the tetra in 2.
-        mat = np.array(self.points)
-        mat_half=np.reshape(mat,(self.n_vertices,3)).transpose()
-        mat_1=np.reshape(mat_half,(3,8)).transpose()
-        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
-        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
-        volume_upper= 1/6*abs(np.linalg.det(mat_upper))
-        mat_lower0 = np.vstack([mat_1[5:9,:],mat_1[3,:]])
-        mat_lower=  np.vstack([mat_lower0.transpose(),np.ones((1,4))])
-        volume_lower= 1/6*abs(np.linalg.det(mat_lower))
-        self.volume = 1
+        # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
+#        mat = self.points
+        mat_diag=np.reshape(self.points,(self.n_vertices,3)).transpose()
+#        mat_1=np.reshape(mat_half,(3,8)).transpose()
+#        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
+#        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
+#        volume_upper= 1/6*abs(np.linalg.det(mat_upper))
+#        mat_lower0 = np.vstack([mat_1[5:9,:],mat_1[3,:]])
+#        mat_lower=  np.vstack([mat_lower0.transpose(),np.ones((1,4))])
+#        volume_lower= 1/6*abs(np.linalg.det(mat_lower))
+#        self.volume = 1
 #        self.volume = volume_upper+volume_lower
