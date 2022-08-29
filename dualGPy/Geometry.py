@@ -40,7 +40,7 @@ class Face2D(Face) :
         self.segments = segments
         self.leng_segments = []
         super().__init__(*args, **kwargs)
-        self.n_vertices = int(len(self.points)/2)
+        self.n_vertices = self.points.shape[0]
 
     @staticmethod
     @njit
@@ -50,9 +50,8 @@ class Face2D(Face) :
         return area_0
 
     def ComputeArea(self):
-        cell_points_reshaped=np.reshape(self.points,(self.n_vertices,2))
-        shifted = np.roll(cell_points_reshaped, 1, axis=0)
-        area_0 = self.algebric_area(cell_points_reshaped,shifted)
+        shifted = np.roll(self.points, 1, axis=0)
+        area_0 = self.algebric_area(self.points,shifted)
         self.area = abs(area_0)
 
     def ComputeLength(self,global_points):
@@ -63,11 +62,10 @@ class Face2D(Face) :
 class Face3D(Face) :
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_vertices = int(len(self.points)/3)
-        self.points_reshaped = np.reshape(self.points,(self.n_vertices,3))
-        self.a = self.points_reshaped[0]
-        self.b = self.points_reshaped[1]
-        self.c = self.points_reshaped[2]
+        self.n_vertices = self.points.shape[0]
+        self.a = self.points[0,:]
+        self.b = self.points[1,:]
+        self.c = self.points[2,:]
 
     def unit_normal(self):
         x = np.linalg.det([[1,self.a[1],self.a[2]],
@@ -87,7 +85,7 @@ class Face3D(Face) :
     def ComputeArea(self):
         #https://stackoverflow.com/questions/12642256/find-area-of-polygon-from-xyz-coordinates
         #shape (N, 3)
-        poly = self.points_reshaped
+        poly = self.points
         #all edges
         edges = poly[1:] - poly[0:1]
         # row wise cross product
@@ -159,48 +157,41 @@ class Solid(abc.ABC):
 class Tetra(Solid):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_vertices = int(len(self.points)/3)
+        self.n_vertices = self.points.shape[0]
         assert(self.n_vertices==4)
     def ComputeArea(self,global_points):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         if self.Faces:
-         points = []
          for faccia in self.Faces:
-             for i,e in enumerate(faccia):
-                 points.extend(global_points[e])
+             points = global_points[faccia, :]
              faccia_el = Face3D(points)
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
-             points = []
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
-        mat = np.array(self.points)
-        mat_1=np.reshape(mat,(self.n_vertices,3)).transpose()
-        mat_2=  np.vstack([mat_1,np.ones((1,4))])
+        mat_1 = self.points.transpose()
+        mat_2 = np.vstack([mat_1,np.ones((1,4))])
         self.volume= 1/6*abs(np.linalg.det(mat_2))
 
 class Hexa(Solid):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_vertices = int(len(self.points)/3)
+        self.n_vertices = self.points.shape[0]
         assert(self.n_vertices==8)
     def ComputeArea(self,global_points):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         if self.Faces:
-         points = []
          for faccia in self.Faces:
-             for i,e in enumerate(faccia):
-                 points.extend(global_points[e])
+             points = global_points[faccia, :]
              faccia_el = Face3D(points)
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
-             points = []
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
 #        mat = self.points
-        mat_diag=np.reshape(self.points,(self.n_vertices,3)).transpose()
+        mat_diag=self.points.transpose()
 #        mat_1=np.reshape(mat_half,(3,8)).transpose()
 #        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
 #        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
