@@ -95,6 +95,12 @@ class Mesh2D(Mesh) :
            n = args[0]
            anisotropic = args[1]
            points = [ [j,i] for i,j in product(range(n),range(n)) ]
+           if anisotropic:
+               from math import exp
+               # Modifying last coordinate, rescaled to be in [0,n-1]
+               # An exponential is used
+               points = np.asarray(points, dtype = float)
+               points[:,-1] = np.exp(points[:,-1]) * (n-1) / exp(n-1)
            for k,element in enumerate(points):
                 if (k+1)%n!=0 and (k < (len(points)-n)) :
                   cells_test.append([k,k+1,n+k+1,n+k])
@@ -110,7 +116,7 @@ class Mesh2D(Mesh) :
           self.cells.extend(cell.data)
           self.cell_type.extend(map(len, cell.data))
       # initialization of the vector of all the centerpoints of the cells
-      self.centers = np.empty((len(self.cells), 2), dtype = np.float)
+      self.centers = np.empty((len(self.cells), 2), dtype = float)
       for i, cell in enumerate(self.cells):
           self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
@@ -374,15 +380,19 @@ class Mesh3D(Mesh):
            cells_test = []
            n = args[0]
            anisotropic = args[1]
-           print(n,anisotropic)
-           if anisotropic == False :
-            points = [ [k,j,i] for i,j,k in product(range(n), range(n), range(n)) ]
-            for fila in range(n-1):
-             for k in range(n*n):
-               if (k+1)%n!=0 and (k < (n*(n-1))) :
-                 cells_test.append([k+(fila*n*n),k+1+(fila*n*n),n+k+1+(fila*n*n),n+k+(fila*n*n),k+(n*n)+(fila*n*n),k+1+(n*n)+(fila*n*n),n+k+1+(n*n)+(fila*n*n),n+k+(n*n)+(fila*n*n)])
-            cells =[("hexahedron",cells_test)]
-            mesh = meshio.Mesh(points,cells)
+           points = [ [k,j,i] for i,j,k in product(range(n), range(n), range(n)) ]
+           if anisotropic:
+               from math import exp
+               # Modifying last coordinate, rescaled to be in [0,n-1]
+               # An exponential is used
+               points = np.asarray(points, dtype = float)
+               points[:,-1] = np.exp(points[:,-1]) * (n-1) / exp(n-1)
+           for fila in range(n-1):
+            for k in range(n*n):
+              if (k+1)%n!=0 and (k < (n*(n-1))) :
+                cells_test.append([k+(fila*n*n),k+1+(fila*n*n),n+k+1+(fila*n*n),n+k+(fila*n*n),k+(n*n)+(fila*n*n),k+1+(n*n)+(fila*n*n),n+k+1+(n*n)+(fila*n*n),n+k+(n*n)+(fila*n*n)])
+           cells =[("hexahedron",cells_test)]
+           mesh = meshio.Mesh(points,cells)
        super().__init__(mesh)
        # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
        self.setup_mesh()
@@ -392,7 +402,7 @@ class Mesh3D(Mesh):
           self.cells.extend(cell.data)
           self.cell_type.extend(map(len, cell.data))
         # initialization of the vector of all the centerpoints of the cells
-        self.centers = np.empty((len(self.cells), 3), dtype = np.float)
+        self.centers = np.empty((len(self.cells), 3), dtype = float)
         for i, cell in enumerate(self.cells):
             self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
