@@ -81,27 +81,21 @@ class Face3D(Face) :
              [self.b[0],self.b[1],1],
              [self.c[0],self.c[1],1]])
         magnitude = (x**2 + y**2 + z**2)**.5
-        if (magnitude==0):
-           magnitude = 1e-3
+        #if (magnitude==0):
+        #   magnitude = 1e-3
         return ([x/magnitude, y/magnitude, z/magnitude])
 
     def ComputeArea(self):
         #https://stackoverflow.com/questions/12642256/find-area-of-polygon-from-xyz-coordinates
-        normal = self.unit_normal()
-        print(normal)
-        rolled = np.roll(self.points_reshaped,1,axis=0)
-      #  total = np.array([])
-        total = np.zeros(3)
-        for index,value in enumerate(self.points_reshaped):
-            product = np.cross(value,rolled[index])
-            total[0] += product[0] #np.add(total,product)
-            total[1] += product[1] #np.add(total,product)
-            total[2] += product[2] #np.add(total,product)
-        area_0 = np.inner(total,normal)
-        if abs(area_0 == 0):
-           area_0 = 1e-3
-        self.area = abs(area_0[0]/2)
-
+        #shape (N, 3)
+        poly = self.points_reshaped
+        #all edges
+        edges = poly[1:] - poly[0:1]
+        # row wise cross product
+        cross_product = np.cross(edges[:-1],edges[1:], axis=1)
+        #area of all triangles
+        area = np.linalg.norm(cross_product, axis=1)/2
+        self.area = sum(area)
 
 class Solid(abc.ABC):
     """ Interface class to compute the different characteristics of an element of
