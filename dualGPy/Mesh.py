@@ -110,7 +110,7 @@ class Mesh2D(Mesh) :
           self.cells.extend(cell.data)
           self.cell_type.extend(map(len, cell.data))
       # initialization of the vector of all the centerpoints of the cells
-      self.centers = np.empty((len(self.cells), 2), dtype = np.float)
+      self.centers = np.empty((len(self.cells), 2))
       for i, cell in enumerate(self.cells):
           self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
@@ -392,7 +392,7 @@ class Mesh3D(Mesh):
           self.cells.extend(cell.data)
           self.cell_type.extend(map(len, cell.data))
         # initialization of the vector of all the centerpoints of the cells
-        self.centers = np.empty((len(self.cells), 3), dtype = np.float)
+        self.centers = np.empty((len(self.cells), 3))
         for i, cell in enumerate(self.cells):
             self.centers[i,:] = np.mean(self.mesh.points[cell, :], axis = 0)
 
