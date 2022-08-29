@@ -239,8 +239,8 @@ class Mesh2D(Mesh) :
      y_line = []
      for key,value in lines_dict.items():
          for cell in value:
-             x_line.append(self.centers[cell][0])
-             y_line.append(self.centers[cell][1])
+             x_line.append(self.centers[cell,0])
+             y_line.append(self.centers[cell,1])
          plt.plot(x_line,y_line,linewidth=2.0,c='r')
          x_line = []
          y_line = []
