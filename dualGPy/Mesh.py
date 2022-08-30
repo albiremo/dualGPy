@@ -455,12 +455,12 @@ class Mesh3D(Mesh):
         # 1. reshape the cell points vector to operate directly with vectors, avoiding unnecessary loops
         # 2. apply the shoelace
             if len(cell_points)==12: #4*3
-               cella = Tetra(cell_points,self.faces[i])
+               cella = Tetra(cell_points,self.mesh.points,self.faces[i])
             else:
-               cella= Hexa(cell_points,self.faces[i])
-            cella.ComputeArea(self.mesh.points)
+               cella= Hexa(cell_points,self.mesh.points,self.faces[i])
+            cella.ComputeArea()
             cella.ComputeVolume()
-#            self.volume.append(cella.volume)
+            self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
             cell_points =[]
     def boundary_detection(self):
