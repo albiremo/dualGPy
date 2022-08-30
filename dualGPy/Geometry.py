@@ -3,6 +3,10 @@ import numpy as np
 from numba import njit, prange
 
 class Face(abc.ABC):
+    """Class interface representing a generic face, 2D or 3D.
+    :param points: Points forming the face
+    :type points: :mod:`np.array`
+    """
     def __init__(self,points):
         self.points = points
     @property

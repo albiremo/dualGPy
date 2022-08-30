@@ -13,7 +13,7 @@ from itertools import product
 from enum import IntEnum
 
 class CellType(IntEnum):
-    """Enum for cell types according to how many faces are on the boundary: interior, 0 faces; valley, 1; ridge, 2;
+    """Enum for cell types according to how many faces are on the boundary: interior faces, 0; valley, 1; ridge, 2;
     corner, 3."""
     INTERIOR = 0
     VALLEY   = 1
@@ -22,10 +22,38 @@ class CellType(IntEnum):
 
 class Mesh(abc.ABC):
     """ This is a class interface representing a generic Mesh, 2D or 3D. The :class:`Mesh` is a 
-        wrapper of the meshio object Mesh, containing methods to compute the area and volume (depending 
+        wrapper of the `meshio` object Mesh, containing methods to compute the area and volume (depending 
         of the dimensionality of the problem (2D or 3D).
-        :param mesh: a :mod:`meshio` object  """
+        :ivar mesh: a :mod:`meshio` object
+        :type mesh: :mod:`meshio.Mesh`
+        :ivar cells: Indices of the points/nodes forming the cells
+        :type cells: list of lists or list of arrays
+        :ivar cell_type: number of vertices per cell
+        :type cell_type: list
+        :ivar faces: dictionary hashed on the cell index containing a lists of lists. Each sub-list contains the
+        indices of the points/nodes forming a face of the cell
+        :type faces: dictionary index:list of lists
+        :ivar Dfaces: dictionary hashed on cell indices containing a lists of lists. 
+        :type Dfaces: dictionary index:list of lists
+        :ivar connectivity: dictionary hashed on cell indices lists of neighbors of the related cells
+        :type connectivity: dictionary index:list
+        :ivar centers: centroids of the cells
+        :type centers: :mod:`np.array`
+        :ivar volume: volumes if 3D or areas if 2D of the cells
+        :type volume: list
+        :ivar area: lengths of each face
+        :type area: list
+        :ivar boundary_cells: number of boundary faces per cell
+        :type boundary_cells: list
+        :ivar onValley: indices of cells on valleys (1 boundary face)
+        :type onValley: list
+        :ivar onRidge: indices of cells on ridges (2 boundary face)
+        :type onRidge: list
+        :ivar onCorner: indices of cells on corners (3 boundary face)
+        :type onCorner: list
+        """
     def __init__(self, mesh):
+        """Constructor method"""
         self.mesh = mesh
         # the Cells are parsed from the meshio object in a simpler structure (TODO: maybe create a dictionary between
         # cells and cell type
