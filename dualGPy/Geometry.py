@@ -199,9 +199,6 @@ class Hexa(Solid):
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
              points = []
-    def ComputeLength(a,b):
-        """ Compute the Euclidean norm distance between two points a and b given as numpy array"""
-        return(dist)
     def RetriveEdges(self):       
         d = ut.dict_of_indices(self.Faces)
         for key,value in d.items():

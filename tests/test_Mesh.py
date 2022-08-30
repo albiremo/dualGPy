@@ -15,4 +15,5 @@ class Test3D:
         Mesh.get_boundary_faces()
         Mesh.ComputeGeometry()
         assert(np.all(Mesh.area))
+        assert(np.all(Mesh.volume))
 
