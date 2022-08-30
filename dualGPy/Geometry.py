@@ -197,10 +197,10 @@ class Hexa(Solid):
         """ Retrive de edges of the Hexa cell analyzed"""
         d = ut.dict_of_indices(self.Faces)
         for key,value in d.items():
-             for i,j in itertools.permutations(value,2):
+             for i,j in itertools.combinations(value,2):
 #            for i in value:
 #                for j in value:
-                    if i!=j: 
+                    # if i!=j: 
                        inter = list(set(self.Faces[i]).intersection(self.Faces[j]))
                        if ((len(inter)>=2) and (inter not in self.edges)):
                           self.edges.append(inter)

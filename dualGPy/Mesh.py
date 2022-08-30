@@ -311,7 +311,6 @@ class Mesh2D(Mesh) :
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
         for i,j in permutations(compliant_cells,2):
-             if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
@@ -384,7 +383,6 @@ class Mesh3D(Mesh):
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
         for i,j in permutations(compliant_cells,2): 
-             if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
