@@ -201,17 +201,16 @@ class Hexa(Solid):
                           self.edges.append(inter)
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
-        # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
-        prodotto = np.zeros(3)
+        prodotto = []
         self.RetriveEdges()
         d = ut.dict_of_indices(self.edges)
         for key,value in d.items():
             if len(value)==3:
                for it,index in enumerate(value):
                    segment = self.edges[index]
-                   a = self.global_points[segment[0]]
-                   b = self.global_points[segment[1]]
-                   prodotto[it] = np.linalg.norm(a-b)
-               self.volume = np.product(prodotto)
+                   p1 = self.global_points[segment[0]]
+                   p2 = self.global_points[segment[1]]
+                   prodotto.append(p2-p1)
+               self.volume = abs(np.dot(prodotto[0],np.cross(prodotto[1],prodotto[2])))
                break
 
