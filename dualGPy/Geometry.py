@@ -2,6 +2,8 @@ import abc
 import numpy as np
 from numba import njit, prange
 import dualGPy.Utils as ut
+import itertools
+
 class Face(abc.ABC):
     def __init__(self,points):
         self.points = points
@@ -96,14 +98,15 @@ class Face3D(Face) :
 
 class Solid(abc.ABC):
     """ Interface class to compute the different characteristics of an element of
-#        a 3D mesh """
+#        a 3D mesh. It takes as an input the global points and build in the constructor the 
+         cell points. """
     def __init__(self,c_points,g_points,Faces):
-        self.Faces = Faces
-        self.cell_points = c_points
+        self.Faces = Faces 
         self.global_points = g_points
-    # TODO: reconstruct the cell_points from global points deleting an argument
-    # we can think to set it as a property
-    # look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
+        self.cell_points = c_points
+    # TODO: - reconstruct the cell_points from global points deleting an argument            
+    # -we can think to set it as a property
+    #  look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
         self.AreaFaces = []
         self.n_faces = int(len(self.Faces))
     @property
@@ -172,7 +175,7 @@ class Tetra(Solid):
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
-        mat_1 = self.points.transpose()
+        mat_1 = self.cell_points.transpose()
         mat_2 = np.vstack([mat_1,np.ones((1,4))])
         self.volume= 1/6*abs(np.linalg.det(mat_2))
 
@@ -191,10 +194,12 @@ class Hexa(Solid):
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
     def RetriveEdges(self):       
+        """ Retrive de edges of the Hexa cell analyzed"""
         d = ut.dict_of_indices(self.Faces)
         for key,value in d.items():
-            for i in value:
-                for j in value:
+             for i,j in itertools.permutations(value,2):
+#            for i in value:
+#                for j in value:
                     if i!=j: 
                        inter = list(set(self.Faces[i]).intersection(self.Faces[j]))
                        if ((len(inter)>=2) and (inter not in self.edges)):

@@ -9,7 +9,7 @@ from dualGPy import Utils as ut
 from dualGPy.Geometry import Face2D,Tetra,Hexa
 from dualGPy.Graph import Graph2D
 from collections import defaultdict
-from itertools import product
+from itertools import product,permutations,combinations
 from enum import IntEnum
 
 class CellType(IntEnum):
@@ -263,7 +263,7 @@ class Mesh2D(Mesh) :
             self.volume.append(cella.area)
             self.area.extend(cella.leng_segments)
 
-    def boundary_detection_Easy(self):
+    def boundary_detection(self):
       """ automatically determine the boundary condition, starting from the given graph
          Right now we generate all the combination of possible faces and we see if they
          are in the neighborhood. If they are not we print them out."""
@@ -310,8 +310,7 @@ class Mesh2D(Mesh) :
         # dimension, considering that they can represent cells of completely different shape.
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
-        for i in compliant_cells:
-          for j in compliant_cells:
+        for i,j in permutations(compliant_cells,2):
              if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
@@ -322,45 +321,6 @@ class Mesh2D(Mesh) :
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
         print(idx)
-
-
-    def boundary_detection(self):
-     """ automatically determine the boundary condition
-         Right now we generate all the combination of possible faces and we see if they
-         are in the neighborhood. If they are not we print them out."""
-     # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
-     boundary_dict = {}
-     for i in range(len(self.cells)):
-        # initialize boundary dict
-        boundary_dict.update({i :[]})
-        # solution from https://stackoverflow.com/questions/69618239/missing-couple-of-elements-in-a-vector
-        combination = itertools.combinations(self.cells[i],2)
-        inter_boundary = set(combination).difference(map(tuple,self.faces[i]))
-        list_inter_boundary = list(map(list,inter_boundary))
-        loop_boundary = list_inter_boundary.copy()
-        # We create a copy of the list with copy method because we cannot remove elements from a list we are looping
-        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list
-        # We check the presence of the inverted faces and we free the list of the boundaries.
-        for element in loop_boundary:
-           for face_cell in self.faces[i]:
-              if sorted(element) == sorted(face_cell):
-                 list_inter_boundary.remove(element)
-        boundary_dict[i].extend(list_inter_boundary)
-        # if is more than number of diagonal i should add it to the boundary cells, because
-        # one face is the boundary (I am not currently interested in which are the boundary faces)
-        # and build the on boundary vector
-        num_diag = len(self.cells[i])*(len(self.cells[i])-3)/2
-        num_boundaries = len(boundary_dict[i]) - num_diag
-        if (len(boundary_dict[i]) > num_diag) :
-            self.boundary_cells.append(np.int(num_boundaries))
-            if (num_boundaries == CellType.VALLEY):
-                self.onValley.append(i)
-            elif (num_boundaries == CellType.RIDGE):
-                self.onRidge.append(i)
-            elif (num_boundaries >= CellType.CORNER):
-                self.onCorner.append(i)
-        else:
-            self.boundary_cells.append(np.int(0))
 
 
 class Mesh3D(Mesh):
@@ -423,8 +383,7 @@ class Mesh3D(Mesh):
         # dimension, considering that they can represent cells of completely different shape.
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
-        for i in compliant_cells:
-          for j in compliant_cells:
+        for i,j in permutations(compliant_cells,2): 
              if i!=j:
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
@@ -451,40 +410,8 @@ class Mesh3D(Mesh):
             cella.ComputeVolume()
             self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
-    def boundary_detection(self):
-     """ automatically determine the boundary condition
-         Right now we generate all the combination of possible faces and we see if they
-         are in the neighborhood. If they are not we print them out."""
-     # define the dictionary of boundaries to determine later exactly the boundary based on number of diagonals
-     boundary_dict = {}
-     for i in range(len(self.cells)):
-        # initialize boundary dict
-        boundary_dict.update({i :[]})
-        # solution from https://stackoverflow.com/questions/69618239/missing-couple-of-elements-in-a-vector
-        combination = itertools.combinations(self.cells[i],3)
-        inter_boundary = set(combination).difference(map(tuple,self.faces[i]))
-        list_inter_boundary = list(map(list,inter_boundary))
-        loop_boundary = list_inter_boundary.copy()
-        # We create a copy of the list with copy method because we cannot remove elements from a list we are looping
-        # https://stackoverflow.com/questions/14126726/python-throws-valueerror-list-removex-x-not-in-list
-        # We check the presence of the inverted faces and we free the list of the boundaries.
-        for element in loop_boundary:
-           for face_cell in self.faces[i]:
-              if sorted(element) == sorted(face_cell):
-                 list_inter_boundary.remove(element)
-        boundary_dict[i].extend(list_inter_boundary)
-        # In case of tetra we do not have diagonals, hence given 3 points
-        # we define exactly the boundary
-        num_boundaries = len(boundary_dict[i])
-        self.boundary_cells.append(np.int(num_boundaries))
-        if (num_boundaries == CellType.VALLEY):
-            self.onValley.append(i)
-        elif (num_boundaries == CellType.RIDGE):
-            self.onRidge.append(i)
-        elif (num_boundaries >= CellType.CORNER):
-            self.onCorner.append(i)
 
-    def boundary_detection_Easy(self):
+    def boundary_detection(self):
       """ automatically determine the boundary condition, starting from the given graph
          Right now we generate all the combination of possible faces and we see if they
          are in the neighborhood. If they are not we print them out."""
