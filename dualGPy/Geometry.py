@@ -14,7 +14,7 @@ class Face(abc.ABC):
         if (new_area>0):
             self._area = new_area
         else:
-            print("Error: the area of this solid is 0")
+            raise ValueError("Error: the area of this solid is 0")
     @area.deleter
     def area(self):
         del self._area
@@ -26,7 +26,7 @@ class Face(abc.ABC):
         if (new_n_vertices > 0):
            self._n_vertices = new_n_vertices
         else:
-           print("Error: the n_segments of a face is always > 0")
+           raise ValueError("Error: the n_segments of a face is always > 0")
     @n_vertices.deleter
     def n_vertices(self):
         del self._n_vertices
@@ -112,7 +112,7 @@ class Solid(abc.ABC):
         if (new_n_vertices > 0):
            self._n_vertices = new_n_vertices
         else:
-           print("Error: the n_segments of a face is always > 0")
+           raise ValueError("Error: the n_segments of a face is always > 0")
     @n_vertices.deleter
     def n_vertices(self):
         del self._n_vertices
@@ -126,7 +126,7 @@ class Solid(abc.ABC):
         if new_volume > 0:
             self._volume = new_volume
         else:
-            print("Error: the volume of this solid is 0")
+            raise ValueError("Error: the volume of this solid is 0")
     @volume.deleter
     def volume(self):
         del self._volume
@@ -138,7 +138,7 @@ class Solid(abc.ABC):
         if (new_n_faces >= 0):
            self._n_vertices = new_n_faces
         else:
-           print("Error: the n_faces of a face is always > 0")
+           raise ValueError("Error: the n_faces of a face is always > 0")
     @n_faces.deleter
     def n_faces(self):
         del self._n_faces
