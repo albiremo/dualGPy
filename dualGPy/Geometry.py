@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from numba import njit, prange
-
+import dualGPy.Utils as ut
 class Face(abc.ABC):
     def __init__(self,points):
         self.points = points
@@ -97,9 +97,11 @@ class Face3D(Face) :
 class Solid(abc.ABC):
     """ Interface class to compute the different characteristics of an element of
 #        a 3D mesh """
-    def __init__(self,points,Faces):
+    def __init__(self,c_points,g_points,Faces):
         self.Faces = Faces
-        self.points = points
+        self.cell_points = c_points
+        self.global_points = g_points
+    # TODO: reconstruct the cell_points from global points deleting an argument
     # we can think to set it as a property
     # look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
         self.AreaFaces = []
@@ -144,7 +146,7 @@ class Solid(abc.ABC):
         del self._n_faces
 
     @abc.abstractmethod
-    def ComputeArea(self,globalPoints):
+    def ComputeArea(self):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         raise NotImplementedError
 
@@ -157,13 +159,13 @@ class Solid(abc.ABC):
 class Tetra(Solid):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_vertices = self.points.shape[0]
+        self.n_vertices = self.cell_points.shape[0]
         assert(self.n_vertices==4)
-    def ComputeArea(self,global_points):
+    def ComputeArea(self):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         if self.Faces:
          for faccia in self.Faces:
-             points = global_points[faccia, :]
+             points = self.global_points[faccia, :]
              faccia_el = Face3D(points)
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
@@ -177,27 +179,39 @@ class Tetra(Solid):
 class Hexa(Solid):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_vertices = self.points.shape[0]
+        self.edges = []
+        self.n_vertices = self.cell_points.shape[0]
         assert(self.n_vertices==8)
-    def ComputeArea(self,global_points):
+    def ComputeArea(self):
         """ compute the Area of the faces of the cell with respect to the dimensionality """
         if self.Faces:
          for faccia in self.Faces:
-             points = global_points[faccia, :]
+             points = self.global_points[faccia, :]
              faccia_el = Face3D(points)
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
+    def RetriveEdges(self):       
+        d = ut.dict_of_indices(self.Faces)
+        for key,value in d.items():
+            for i in value:
+                for j in value:
+                    if i!=j: 
+                       inter = list(set(self.Faces[i]).intersection(self.Faces[j]))
+                       if ((len(inter)>=2) and (inter not in self.edges)):
+                          self.edges.append(inter)
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
-#        mat = self.points
-        mat_diag=self.points.transpose()
-#        mat_1=np.reshape(mat_half,(3,8)).transpose()
-#        mat_upper0 = np.vstack([mat_1[0:3,:],mat_1[4,:]])
-#        mat_upper=  np.vstack([mat_upper0.transpose(),np.ones((1,4))])
-#        volume_upper= 1/6*abs(np.linalg.det(mat_upper))
-#        mat_lower0 = np.vstack([mat_1[5:9,:],mat_1[3,:]])
-#        mat_lower=  np.vstack([mat_lower0.transpose(),np.ones((1,4))])
-#        volume_lower= 1/6*abs(np.linalg.det(mat_lower))
-#        self.volume = 1
-#        self.volume = volume_upper+volume_lower
+        prodotto = np.zeros(3)
+        self.RetriveEdges()
+        d = ut.dict_of_indices(self.edges)
+        for key,value in d.items():
+            if len(value)==3:
+               for it,index in enumerate(value):
+                   segment = self.edges[index]
+                   a = self.global_points[segment[0]]
+                   b = self.global_points[segment[1]]
+                   prodotto[it] = np.linalg.norm(a-b)
+               self.volume = np.product(prodotto)
+               break
+

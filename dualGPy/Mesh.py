@@ -444,12 +444,12 @@ class Mesh3D(Mesh):
         for i,cell in enumerate(self.cells):
         # applying shoelace formula
             if len(cell) == 4:
-               cella = Tetra(self.mesh.points[cell, :],self.faces[i])
+               cella = Tetra(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
             else:
-               cella = Hexa(self.mesh.points[cell, :],self.faces[i])
-            cella.ComputeArea(self.mesh.points)
+               cella = Hexa(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
+            cella.ComputeArea()
             cella.ComputeVolume()
-#            self.volume.append(cella.volume)
+            self.volume.append(cella.volume)
             self.area.extend(cella.AreaFaces)
     def boundary_detection(self):
      """ automatically determine the boundary condition
