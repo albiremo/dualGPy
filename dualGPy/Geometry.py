@@ -2,6 +2,8 @@ import abc
 import numpy as np
 from numba import njit, prange
 import dualGPy.Utils as ut
+import itertools
+
 class Face(abc.ABC):
     def __init__(self,points):
         self.points = points
@@ -96,14 +98,15 @@ class Face3D(Face) :
 
 class Solid(abc.ABC):
     """ Interface class to compute the different characteristics of an element of
-#        a 3D mesh """
+#        a 3D mesh. It takes as an input the global points and build in the constructor the 
+         cell points. """
     def __init__(self,c_points,g_points,Faces):
-        self.Faces = Faces
-        self.cell_points = c_points
+        self.Faces = Faces 
         self.global_points = g_points
-    # TODO: reconstruct the cell_points from global points deleting an argument
-    # we can think to set it as a property
-    # look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
+        self.cell_points = c_points
+    # TODO: - reconstruct the cell_points from global points deleting an argument            
+    # -we can think to set it as a property
+    #  look at https://stackoverflow.com/questions/37564798/python-property-on-a-list
         self.AreaFaces = []
         self.n_faces = int(len(self.Faces))
     @property
@@ -172,7 +175,7 @@ class Tetra(Solid):
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
         # https://stackoverflow.com/questions/9866452/calculate-volume-of-any-tetrahedron-given-4-points
-        mat_1 = self.points.transpose()
+        mat_1 = self.cell_points.transpose()
         mat_2 = np.vstack([mat_1,np.ones((1,4))])
         self.volume= 1/6*abs(np.linalg.det(mat_2))
 
@@ -191,27 +194,28 @@ class Hexa(Solid):
              faccia_el.ComputeArea()
              self.AreaFaces.append(faccia_el.area)
     def RetriveEdges(self):       
+        """ Retrive de edges of the Hexa cell analyzed"""
         d = ut.dict_of_indices(self.Faces)
         for key,value in d.items():
-            for i in value:
-                for j in value:
+             for i,j in itertools.permutations(value,2):
+#            for i in value:
+#                for j in value:
                     if i!=j: 
                        inter = list(set(self.Faces[i]).intersection(self.Faces[j]))
                        if ((len(inter)>=2) and (inter not in self.edges)):
                           self.edges.append(inter)
     def ComputeVolume(self):
         """ compute the Volume of  of the cells with respect to the dimensionality """
-        # https://math.stackexchange.com/questions/1628540/what-is-the-enclosed-volume-of-an-irregular-cube-given-the-x-y-z-coordinates-of/1628872#1628872
-        prodotto = np.zeros(3)
+        prodotto = []
         self.RetriveEdges()
         d = ut.dict_of_indices(self.edges)
         for key,value in d.items():
             if len(value)==3:
                for it,index in enumerate(value):
                    segment = self.edges[index]
-                   a = self.global_points[segment[0]]
-                   b = self.global_points[segment[1]]
-                   prodotto[it] = np.linalg.norm(a-b)
-               self.volume = np.product(prodotto)
+                   p1 = self.global_points[segment[0]]
+                   p2 = self.global_points[segment[1]]
+                   prodotto.append(p2-p1)
+               self.volume = abs(np.dot(prodotto[0],np.cross(prodotto[1],prodotto[2])))
                break
 
