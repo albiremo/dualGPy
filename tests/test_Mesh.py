@@ -53,6 +53,28 @@ class Test3D:
         assert(np.all(Mesh.area))
         assert(np.all(Mesh.volume))
 
+    def test_Volume_non_rectangle_Hexa(self):
+        Lx, Ly, Lz = 2, 2, 2
+        dx, dy = .5*Lx, .25*Ly
+        points = np.array([
+            [0     , 0     , 0] , # idx = 0
+            [Lx    , dy    , 0] , # idx = 1
+            [Lx    , Ly+dy , 0] , # idx = 2
+            [0     , Ly    , 0] , # idx = 3
+            [dx    , 0     , Lz], # idx = 4
+            [Lx+dx , dy    , Lz], # idx = 5
+            [Lx+dx , Ly+dy , Lz], # idx = 6
+            [dx    , Ly    , Lz], # idx = 7
+            ], dtype = float)
+        cells = [('hexahedron', [[0,1,2,3,4,5,6,7]])]
+        base_mesh = Mesh(points = points, cells = cells)
+        mesh = Mesh3D(base_mesh)
+        # Since we are working with only one cell, we have to give it the faces ourselves
+        mesh.faces[0] = [ [0,1,2,3], [0,1,5,4], [0,3,4,7] ]
+        mesh.ComputeGeometry()
+        ref_vol = Lx*Ly*Lz
+        assert(abs(mesh.volume[0] - ref_vol) < 1e-14)
+
     def test_multi_zone(self):
         """A cube of 2*L edge divided into 2 on dimension z, mounted by a pyramid dived into 2 tetrahedra"""
         L = 1
