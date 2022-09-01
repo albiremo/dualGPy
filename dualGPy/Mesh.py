@@ -6,7 +6,7 @@ import numpy as np
 import itertools
 import time
 from dualGPy import Utils as ut
-from dualGPy.Geometry import Face2D,Tetra,Hexa
+from dualGPy.Geometry import Face2D,Tetra,Hexa,Wedge
 from dualGPy.Graph import Graph2D
 from collections import defaultdict
 from itertools import product,permutations,combinations
