@@ -219,3 +219,44 @@ class Hexa(Solid):
                self.volume = abs(np.dot(prodotto[0],np.cross(prodotto[1],prodotto[2])))
                break
 
+class Wedge(Solid):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.edges = []
+        self.n_vertices = self.cell_points.shape[0]
+        assert(self.n_vertices==6)
+    def ComputeArea(self):
+        """ compute the Area of the faces of the cell with respect to the dimensionality """
+        if self.Faces:
+         for faccia in self.Faces:
+             points = self.global_points[faccia, :]
+             faccia_el = Face3D(points)
+             faccia_el.ComputeArea()
+             self.AreaFaces.append(faccia_el.area)
+    def RetriveEdges(self):       
+        """ Retrive de edges of the Hexa cell analyzed"""
+        d = ut.dict_of_indices(self.Faces)
+        for key,value in d.items():
+             for i,j in itertools.combinations(value,2):
+#            for i in value:
+#                for j in value:
+                    # if i!=j: 
+                       inter = list(set(self.Faces[i]).intersection(self.Faces[j]))
+                       if ((len(inter)>=2) and (inter not in self.edges)):
+                          self.edges.append(inter)
+    def ComputeVolume(self):
+        """ compute the Volume of  of the cells with respect to the dimensionality. The volume of the
+            wedge is considered to be the half of the volume of the corresponding Hexa """
+        prodotto = []
+        self.RetriveEdges()
+        d = ut.dict_of_indices(self.edges)
+        for key,value in d.items():
+            if len(value)==3:
+               for it,index in enumerate(value):
+                   segment = self.edges[index]
+                   p1 = self.global_points[segment[0]]
+                   p2 = self.global_points[segment[1]]
+                   prodotto.append(p2-p1)
+               self.volume = abs(np.dot(prodotto[0],np.cross(prodotto[1],prodotto[2])))/2
+               break
+
