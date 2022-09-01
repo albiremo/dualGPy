@@ -402,6 +402,8 @@ class Mesh3D(Mesh):
         # applying shoelace formula
             if len(cell) == 4:
                cella = Tetra(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
+            elif len(cell) == 6: 
+               cella = Wedge(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
             else:
                cella = Hexa(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
             cella.ComputeArea()
@@ -422,6 +424,9 @@ class Mesh3D(Mesh):
          if (self.cell_type[k]==8):
             # case of hexa
             num_boundaries = 6-connections
+         elif (self.cell_type[k]==6):
+            # case of wedge      
+            num_boundaries = 5-connections
          else:
             # case of tetra
             num_boundaries = 4-connections

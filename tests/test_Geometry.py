@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath('../'))
 from dualGPy.Utils import *
-from dualGPy.Geometry import Face3D,Hexa,Tetra
+from dualGPy.Geometry import Face3D,Hexa,Tetra,Wedge
 import numpy as np
 class Test3D:
     def test_square(self):
@@ -39,4 +39,15 @@ class Test3D:
         cella = Tetra(c_points,c_points,faces)
         cella.ComputeVolume()
         assert(cella.volume==0.08333333333333333) #1/3*A0*h
+    def test_wedge(self):
+        c_points = np.array([[0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0]])
+        faces = [[0,1,2],[1,2,4,5],[0,2,3,4],[1,0,3,5],[3,4,5]]
+        cella = Wedge(c_points,c_points,faces)
+        cella.ComputeVolume()
+        assert(cella.volume==0.5) #1/3*A0*h
         
