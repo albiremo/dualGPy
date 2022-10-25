@@ -125,7 +125,7 @@ class Mesh2D(Mesh) :
 
 
 
-    def draw_graph(self,string):
+    def draw_graph(self, string, print_cell_ID = False):
      """Draw the mesh and the undirected graph
         :param string: string of the name of the figure produced"""
      plt.figure()
@@ -136,7 +136,8 @@ class Mesh2D(Mesh) :
      #to print numero cell
      #    if i<100:
      #     print("true")
-     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
+         if print_cell_ID:
+             plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
          for i in range(len(elemento)):
        ## # plot the grid
            x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
@@ -145,7 +146,7 @@ class Mesh2D(Mesh) :
          #else:
          # break
      x1,x2,y1,y2 = plt.axis()
-     plt.axis((0.0,0.25,-0.1,0.1))
+     # plt.axis((0.0,0.25,-0.1,0.1))
      ##draw the adjacency graph
      plt.savefig(string)
 

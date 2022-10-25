@@ -4,12 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from dualGPy import Utils as ut
-class Graph(abc.ABC): 
+class Graph(abc.ABC):
     """Base class for the Graph2D and Graph3D representation.
      WARNING! 2D and 3D are considered from a geometric point of
      view:
 
-     mesh : Mesh representation from meshio library
+     mesh : dualGPy mesh representation
     """
     def __init__(self, mesh):
      self.mesh = mesh
@@ -18,7 +18,7 @@ class Graph(abc.ABC):
      self.edges = []
      self.vertex = [0]
      self.weight = []
-    
+
     @abc.abstractmethod
     def get_CSR(self):
      raise NotImplementedError
@@ -32,19 +32,19 @@ class Graph(abc.ABC):
      """
      # the CSR representation is built starting from the definition, hence
      # we cycle over the adjacency matrix, we identify the non zero entry
-     # and finally we fill the vertex vector with the position where we find the 
+     # and finally we fill the vertex vector with the position where we find the
      # non zero elements in the edges vector. We hence fill the edges vector at the same
      # way
      # numpy adjacency matrix
      adj = nx.to_numpy_array(self.nx_graph, nodelist=range(len(self.mesh.cells)))
-     non_zero = np.count_nonzero(self.adj,axis=1)
+     non_zero = np.count_nonzero(adj,axis=1)
      for i,e in enumerate(adj[:,1]):
-       print(i) 
+       print(i)
        self.vertex.append(np.sum(non_zero[:i]))
        for j,f in enumerate(adj[i,:]):
            if adj[i,j]!=0:
             self.edges.append(j)
-     self.vertex.append(np.sum(np.count_nonzero(self.adj)))
+     self.vertex.append(np.sum(np.count_nonzero(adj)))
 
 
 class Graph2D(Graph):
@@ -61,21 +61,28 @@ class Graph2D(Graph):
         self.edges.extend(self.mesh.connectivity[key])
         somma += len(self.mesh.connectivity[key])
         self.vertex.append(somma)
-              
-                 
 
-    def draw_graph(self,Mesh1,string):
-     """Draw the mesh and the graph"""
+
+
+    def draw_graph(self, string, mesh = None):
+     """Draw the mesh and the graph.
+Parameters:
+* string: str
+  Name of the file in which the graph will be printed
+* mesh: dualGPy mesh, default: None
+  mesh whose graph will be drawn. If None, the mesh used to set up the graph is used
+"""
+     m = self.mesh if mesh is None else mesh
      plt.figure()
      ### cycle on the elements
-     for elemento in Mesh1.cells:
+     for elemento in m.cells:
       ### cycle on the point of the elements
          for i in range(len(elemento)):
        ## # plot the grid
-          x_value = [Mesh1.mesh.points[elemento[i-1],0],Mesh1.mesh.points[elemento[i],0]]
-          y_value = [Mesh1.mesh.points[elemento[i-1],1],Mesh1.mesh.points[elemento[i],1]]
-          plt.plot(x_value,y_value,c='r')  
+          x_value = [m.mesh.points[elemento[i-1],0],m.mesh.points[elemento[i],0]]
+          y_value = [m.mesh.points[elemento[i-1],1],m.mesh.points[elemento[i],1]]
+          plt.plot(x_value,y_value,c='r')
      ##draw the adjacency graph
-     nx.draw(self.nx_graph,pos=Mesh1.centers,with_labels = True)
+     nx.draw(self.nx_graph,pos=m.centers,with_labels = True)
      plt.savefig(string)
 

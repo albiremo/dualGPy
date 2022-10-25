@@ -4,8 +4,13 @@ from dualGPy import Graph as graph
 import numpy as np
 import networkx as nx
 
+# EXAMPLE 1: CREATE A MESH
+# 1. Set up points and cells
+# 2. Use them to get a meshio mesh
+# 3. Use meshio mesh to build a dualGPy mesh
+
 points = [
-    [0.0, 0.0], 
+    [0.0, 0.0],
     [1.0, 0.0],
     [0.0, 1.0],
     [1.0, 1.0],
@@ -48,22 +53,17 @@ mesh = meshio.Mesh(
     # Each item in cell data must match the cells array
 )
 
-
-
-
-
-
-
-
-
-
 Mesh1 = dm.Mesh2D(mesh)
 Mesh1.get_boundary_faces()
 Mesh1.ComputeGeometry()
 Mesh1.boundary_detection()
-# graph
-Graph1 = graph.Graph2D(Mesh1)
-Graph1.get_adj_matrix()
-Graph1.adj_to_csr()
 
-Graph1.draw_graph(Mesh1,"finale.png")
+# EXAMPLE 2: CREATE AND EXPORT A GRAPH
+# To create a graph, just pass a dualGPy mesh.
+# MIND: one should have called get_boundary_faces beforehand in order to set up the connectivity
+Graph1 = graph.Graph2D(Mesh1)
+Graph1.get_CSR()
+# Graph1.adj_to_csr()
+# Graph inherits also adj_to_csr, but it basically does the same thing as get_CSR
+
+Graph1.draw_graph("finale.png")
