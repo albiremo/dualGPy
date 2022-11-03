@@ -77,11 +77,16 @@ class Mesh2D(Mesh) :
       and contains  concrete methods coming from :class:`Mesh`.
        
       The constructor of the class takes a variadic list of arguments. It is possible or to give a :mod:`meshio` object (an external mesh
-      given in the datacard or 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 2D mesh
-      of squares (number of element in x will be the same of number of elements in y): 
+      given in the datacard), 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 2D mesh
+      of squares (number of element in x will be the same of number of elements in y), or 5 parameters that will mesh an
+      arc of torus:
 
-      :param n: number of elements in the 2D mesh 
-      :param anisotropic: or true or false it allows to introduce the anisotropicity in one direction
+      :param n: number of nodes in each direction
+      :param anisotropic: or true or false it allows to introduce the anisotropy in one direction
+
+      :param n: number of nodes in each direction
+      :param rho_min, rho_max: internal and external radii of the torus
+      :param theta_min, theta_max: bounds of the arc
     """ 
     def __init__(self, *args):
        # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable. Implementation of a variadic 
@@ -89,7 +94,7 @@ class Mesh2D(Mesh) :
        # input
        if len(args)==1:
           mesh=args[0]
-       if len(args)>1:
+       elif len(args)==2:
            points =[]
            cells_test = []
            n = args[0]
@@ -108,6 +113,25 @@ class Mesh2D(Mesh) :
                   cells_test.append([k,k+1,n+k+1,n+k])
            cells =[("quad",cells_test)]
            mesh = meshio.Mesh(points,cells)
+       elif len(args)==5:
+           ### n, rho_min, rho_max, theta_min, theta_max
+           n, rho_min, rho_max, theta_min, theta_max = args
+           if n < 2:
+               raise ValueError(f'Number of nodes per edge should be at least 2 (got {n})')
+           theta = np.linspace(theta_min, theta_max, n, dtype = float, endpoint = True)
+           rho   = np.linspace(rho_min,   rho_max,   n, dtype = float, endpoint = True)
+           tm, rm = np.meshgrid(theta, rho)
+           xm = rm * np.cos(np.radians(tm))
+           ym = rm * np.sin(np.radians(tm))
+           points = [ [xm[j,i], ym[j,i] ] for i,j in product(range(n),range(n)) ]
+           cells_test = []
+           for k,element in enumerate(points):
+                if (k+1)%n!=0 and (k < (len(points)-n)) :
+                  cells_test.append([k,k+1,n+k+1,n+k])
+           cells =[("quad",cells_test)]
+           mesh = meshio.Mesh(points,cells)
+       else:
+           raise ValueError(f'Invalid number of arguments, got {len(args)}, allowed only 1, 2 or 5')
        super().__init__(mesh)
        self.setup_mesh()
 
@@ -320,16 +344,32 @@ class Mesh2D(Mesh) :
                if ((len(inter)>=2) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
-        print(idx)
+        # print(idx)
 
 
 class Mesh3D(Mesh):
     """ Implements the 3D mesh: ATTENTION! Right now only tetra supported, but flexible to implement also
-        hexa and pyramids""" 
+      hexa and pyramids
+      The :class:`Mesh3D` derives from the :class:`Mesh` 
+      and contains  concrete methods coming from :class:`Mesh`.
+       
+      The constructor of the class takes a variadic list of arguments. It is possible or to give a :mod:`meshio` object (an external mesh
+      given in the datacard), 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 3D mesh
+      of hexas (number of element in x will be the same of number of elements in y), or 7 parameters that will mesh a
+      shell of a n arc of torus:
+
+      :param n: number of nodes in each direction
+      :param anisotropic: or true or false it allows to introduce the anisotropy in one direction
+
+      :param n: number of nodes in each direction
+      :param rho_min, rho_max: internal and external radii of the shell
+      :param theta_min, theta_max: bounds of the polar angle
+      :param phi_min, phi_max: bounds of the azimuthal angle
+        """ 
     def __init__(self, *args):
        if len(args)==1:
           mesh=args[0]
-       if len(args)>1:
+       elif len(args)==2:
            points = []
            cells_test = []
            n = args[0]
@@ -349,6 +389,28 @@ class Mesh3D(Mesh):
                 cells_test.append([k+(fila*n*n),k+1+(fila*n*n),n+k+1+(fila*n*n),n+k+(fila*n*n),k+(n*n)+(fila*n*n),k+1+(n*n)+(fila*n*n),n+k+1+(n*n)+(fila*n*n),n+k+(n*n)+(fila*n*n)])
            cells =[("hexahedron",cells_test)]
            mesh = meshio.Mesh(points,cells)
+       elif len(args)==7:
+           ### rho_min, rho_max, theta_min, theta_max, phi_min, phi_max, n
+           n, rho_min, rho_max, theta_min, theta_max, phi_min, phi_max = args
+           if n < 2:
+               raise ValueError(f'Number of nodes per edge should be at least 2 (got {n})')
+           theta = np.linspace(theta_min, theta_max, n, dtype = float, endpoint = True)
+           rho   = np.linspace(rho_min,   rho_max,   n, dtype = float, endpoint = True)
+           phi   = np.linspace(phi_min,   phi_max,   n, dtype = float, endpoint = True)
+           tm, rm, pm = np.meshgrid(theta, rho, phi)
+           xm = rm * np.sin(np.radians(pm)) * np.cos(np.radians(tm))
+           ym = rm * np.sin(np.radians(pm)) * np.sin(np.radians(tm))
+           zm = rm * np.cos(np.radians(pm))
+           points = [ [xm[k,j,i], ym[k,j,i], zm[k,j,i] ] for i,j,k in product(range(n),range(n), range(n)) ]
+           cells_test = []
+           for fila in range(n-1):
+            for k in range(n*n):
+              if (k+1)%n!=0 and (k < (n*(n-1))) :
+                cells_test.append([k+(fila*n*n),k+1+(fila*n*n),n+k+1+(fila*n*n),n+k+(fila*n*n),k+(n*n)+(fila*n*n),k+1+(n*n)+(fila*n*n),n+k+1+(n*n)+(fila*n*n),n+k+(n*n)+(fila*n*n)])
+           cells =[("hexahedron",cells_test)]
+           mesh = meshio.Mesh(points,cells)
+       else:
+           raise ValueError(f'Invalid number of arguments, got {len(args)}, allowed only 1, 2 or 7')
        super().__init__(mesh)
        # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable
        self.setup_mesh()
@@ -392,7 +454,7 @@ class Mesh3D(Mesh):
                if ((len(inter)>=3) and (inter not in self.faces[i])):
                  self.faces[i].append(inter)
                  self.connectivity[i].append(j)
-        print(idx)
+        # print(idx)
 
 
     def ComputeGeometry(self):
