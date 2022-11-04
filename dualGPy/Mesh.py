@@ -149,30 +149,50 @@ class Mesh2D(Mesh) :
 
 
 
-    def draw_graph(self, string, print_cell_ID = False):
-     """Draw the mesh and the undirected graph
-        :param string: string of the name of the figure produced"""
-     plt.figure()
-    ### cycle on the elements
-     for i,elemento in enumerate(self.cells):
-      ### cycle on the point of the elements
-         print(i)
-     #to print numero cell
-     #    if i<100:
-     #     print("true")
-         if print_cell_ID:
-             plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
-         for i in range(len(elemento)):
-       ## # plot the grid
-           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
-           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
-           plt.plot(x_value,y_value,c='k')
-         #else:
-         # break
-     x1,x2,y1,y2 = plt.axis()
-     # plt.axis((0.0,0.25,-0.1,0.1))
-     ##draw the adjacency graph
-     plt.savefig(string)
+    def draw_graph(self, string, print_cell_ID = False, data = None, draw = True, quality = 200):
+        """Draw the mesh and the undirected graph
+
+        :param string: string of the name of the figure produced
+        :param print_cell_ID: whether to print or not the cell IDs; default = False
+        :param data: if not None, data to use to color the cell with (length = #cells); default = None
+        :param draw: whether to draw or not the edges of the cells; default = True
+        :param quality: dpi used when saving the figure; default = 200
+        """
+        plt.figure()
+        ### cycle on the elements
+        norm, cmap = None, None
+        text_color = 'k'
+        if data is not None:
+            import matplotlib
+            mn, mx = min(data), max(data)
+            rng = mx-mn
+            if rng < 10:
+                cmap = matplotlib.cm.get_cmap('tab10')
+            elif rng < 12:
+                cmap = matplotlib.cm.get_cmap('Paired')
+            elif rng < 20:
+                cmap = matplotlib.cm.get_cmap('tab20')
+            else:
+                cmap = matplotlib.cm.get_cmap()
+                text_color = 'red'
+            norm = matplotlib.colors.Normalize(vmin = min(data), vmax = max(data))
+
+        for c,elemento in enumerate(self.cells):
+            if data is not None:
+                plt.fill(self.mesh.points[elemento,0],self.mesh.points[elemento,1], color = cmap(norm(data[c])))
+            if draw:
+                for i in range(len(elemento)):
+                    ## # plot the grid
+                    x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
+                    y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
+                    plt.plot(x_value,y_value,c='k')
+            if print_cell_ID:
+                plt.text(self.centers[c][0],self.centers[c][1], c, fontsize = 10, color = text_color, va='center', ha='center')
+        # x1,x2,y1,y2 = plt.axis()
+        # plt.axis((0.0,0.25,-0.1,0.1))
+        ##draw the adjacency graph
+        plt.tight_layout()
+        plt.savefig(string, dpi = quality)
 
     def draw_aggl_lines_full(self,string,lines_dict):
      """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
