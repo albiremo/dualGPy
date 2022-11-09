@@ -149,7 +149,7 @@ class Mesh2D(Mesh) :
 
 
 
-    def draw_graph(self, string, print_cell_ID = False, data = None, draw = True, quality = 200):
+    def draw_graph(self, string, print_cell_ID = False, data = None, draw = True, quality = 200, equal_axes = False):
         """Draw the mesh and the undirected graph
 
         :param string: string of the name of the figure produced
@@ -157,6 +157,7 @@ class Mesh2D(Mesh) :
         :param data: if not None, data to use to color the cell with (length = #cells); default = None
         :param draw: whether to draw or not the edges of the cells; default = True
         :param quality: dpi used when saving the figure; default = 200
+        :param equal_axes: Whether the axes of the plot should have the same unit length; default = False
         """
         plt.figure()
         ### cycle on the elements
@@ -176,21 +177,25 @@ class Mesh2D(Mesh) :
                 cmap = matplotlib.cm.get_cmap()
                 text_color = 'red'
             norm = matplotlib.colors.Normalize(vmin = min(data), vmax = max(data))
+        kw = {}
+        if draw:
+            kw['edgecolor'] = 'k'
+            lab = 'facecolor'
+        else:
+            lab = 'color'
+        kw[lab] = 'w'
 
         for c,elemento in enumerate(self.cells):
             if data is not None:
-                plt.fill(self.mesh.points[elemento,0],self.mesh.points[elemento,1], color = cmap(norm(data[c])))
-            if draw:
-                for i in range(len(elemento)):
-                    ## # plot the grid
-                    x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
-                    y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
-                    plt.plot(x_value,y_value,c='k')
+                kw[lab] = cmap(norm(data[c]))
+            plt.fill(self.mesh.points[elemento,0],self.mesh.points[elemento,1], **kw)
             if print_cell_ID:
                 plt.text(self.centers[c][0],self.centers[c][1], c, fontsize = 10, color = text_color, va='center', ha='center')
         # x1,x2,y1,y2 = plt.axis()
         # plt.axis((0.0,0.25,-0.1,0.1))
         ##draw the adjacency graph
+        if equal_axes:
+            plt.gca().set_aspect('equal', adjustable = 'box')
         plt.tight_layout()
         plt.savefig(string, dpi = quality)
 
