@@ -21,8 +21,8 @@ class CellType(IntEnum):
     CORNER   = 3
 
 class Mesh(abc.ABC):
-    """ This is a class interface representing a generic Mesh, 2D or 3D. The :class:`Mesh` is a 
-        wrapper of the meshio object Mesh, containing methods to compute the area and volume (depending 
+    """ This is a class interface representing a generic Mesh, 2D or 3D. The :class:`Mesh` is a
+        wrapper of the meshio object Mesh, containing methods to compute the area and volume (depending
         of the dimensionality of the problem (2D or 3D).
         :param mesh: a :mod:`meshio` object  """
     def __init__(self, mesh):
@@ -33,7 +33,7 @@ class Mesh(abc.ABC):
         self.cell_type = []
         # non directional faces (in graph sense), hence  a dictionary that associates to each cell a list of faces that are neighborhood with other faces (WARNING: faces that are at the boundary are not considered, they are not shared with any other cell.
         self.faces = {}
-        # Directional faces in graph sense. It means that the same face will be present only in one of the cells that are sharing it and not in both as in Faces 
+        # Directional faces in graph sense. It means that the same face will be present only in one of the cells that are sharing it and not in both as in Faces
         self.Dfaces ={}
         self.centers = None
         self.volume = []
@@ -42,7 +42,7 @@ class Mesh(abc.ABC):
         self.onRidge  = []
         self.onCorner  = []
         self.boundary_cells = []
-        # connectivity dictionary. 
+        # connectivity dictionary.
         #For each cell (key) we have the associated list of the connected cells. (in this case we use the non directed graph and hence if 0 is connected for example with 1, even the 1 will be connected with 0 and hence key and values will be present in both).
         self.connectivity = {}
 
@@ -73,9 +73,9 @@ class Mesh(abc.ABC):
         raise NotImplementedError
 
 class Mesh2D(Mesh) :
-    """ This is a concrete class representing a 2D mesh. The :class:`Mesh2D` derives from the :class:`Mesh` 
+    """ This is a concrete class representing a 2D mesh. The :class:`Mesh2D` derives from the :class:`Mesh`
       and contains  concrete methods coming from :class:`Mesh`.
-       
+
       The constructor of the class takes a variadic list of arguments. It is possible or to give a :mod:`meshio` object (an external mesh
       given in the datacard), 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 2D mesh
       of squares (number of element in x will be the same of number of elements in y), or 5 parameters that will mesh an
@@ -87,9 +87,9 @@ class Mesh2D(Mesh) :
       :param n: number of nodes in each direction
       :param rho_min, rho_max: internal and external radii of the torus
       :param theta_min, theta_max: bounds of the arc
-    """ 
+    """
     def __init__(self, *args):
-       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable. Implementation of a variadic 
+       # look at this to understand what has been done https://stackoverflow.com/questions/2728346/passing-parameter-to-base-class-constructor-or-using-instance-variable. Implementation of a variadic
        # formulation passing to the interface the mesh here constructed or the one taken as
        # input
        if len(args)==1:
@@ -235,7 +235,7 @@ class Mesh2D(Mesh) :
      plt.savefig(string)
 
     def draw_bnd(self,string,vector):
-     """Draw the mesh and the priority boundaries (for the agglomeration) 
+     """Draw the mesh and the priority boundaries (for the agglomeration)
         :param string: string of the name of the figure produced
         :param vector: vector of the boundaries to draw
         """
@@ -328,7 +328,7 @@ class Mesh2D(Mesh) :
             # case of triangle
             num_boundaries = 3-connections
          else:
-            # case of square 
+            # case of square
             num_boundaries = 4-connections
          if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
@@ -376,9 +376,9 @@ class Mesh2D(Mesh) :
 class Mesh3D(Mesh):
     """ Implements the 3D mesh: ATTENTION! Right now only tetra supported, but flexible to implement also
       hexa and pyramids
-      The :class:`Mesh3D` derives from the :class:`Mesh` 
+      The :class:`Mesh3D` derives from the :class:`Mesh`
       and contains  concrete methods coming from :class:`Mesh`.
-       
+
       The constructor of the class takes a variadic list of arguments. It is possible or to give a :mod:`meshio` object (an external mesh
       given in the datacard), 2 parameters that allows to the constructor to build a :mod:`meshio` object that will represent a 3D mesh
       of hexas (number of element in x will be the same of number of elements in y), or 7 parameters that will mesh a
@@ -391,7 +391,7 @@ class Mesh3D(Mesh):
       :param rho_min, rho_max: internal and external radii of the shell
       :param theta_min, theta_max: bounds of the polar angle
       :param phi_min, phi_max: bounds of the azimuthal angle
-        """ 
+        """
     def __init__(self, *args):
        if len(args)==1:
           mesh=args[0]
@@ -472,7 +472,7 @@ class Mesh3D(Mesh):
         # dimension, considering that they can represent cells of completely different shape.
         # checked that we have more than two vertex in common (WE ARE IN 2D HERE), and that the node is not already
         # connected with the analysed cell, we add it to the respective dictionary key.
-        for i,j in permutations(compliant_cells,2): 
+        for i,j in permutations(compliant_cells,2):
                inter = list(set(self.cells[i]).intersection(self.cells[j]))
         # in the faces part we have to associate with each cell all the faces
         # like in a bi-directed graph
@@ -492,7 +492,7 @@ class Mesh3D(Mesh):
         # applying shoelace formula
             if len(cell) == 4:
                cella = Tetra(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
-            elif len(cell) == 6: 
+            elif len(cell) == 6:
                cella = Wedge(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
             else:
                cella = Hexa(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
@@ -515,7 +515,7 @@ class Mesh3D(Mesh):
             # case of hexa
             num_boundaries = 6-connections
          elif (self.cell_type[k]==6):
-            # case of wedge      
+            # case of wedge
             num_boundaries = 5-connections
          else:
             # case of tetra
