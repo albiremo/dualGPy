@@ -123,7 +123,8 @@ class Mesh2D(Mesh) :
            tm, rm = np.meshgrid(theta, rho)
            xm = rm * np.cos(np.radians(tm))
            ym = rm * np.sin(np.radians(tm))
-           points = [ [xm[j,i], ym[j,i] ] for i,j in product(range(n),range(n)) ]
+           points = np.stack((xm,ym), axis = -1).reshape((-1,2))
+           # points = [ [xm[j,i], ym[j,i] ] for i,j in product(range(n),range(n)) ]
            cells_test = []
            for k,element in enumerate(points):
                 if (k+1)%n!=0 and (k < (len(points)-n)) :
@@ -426,7 +427,8 @@ class Mesh3D(Mesh):
            xm = rm * np.sin(np.radians(pm)) * np.cos(np.radians(tm))
            ym = rm * np.sin(np.radians(pm)) * np.sin(np.radians(tm))
            zm = rm * np.cos(np.radians(pm))
-           points = [ [xm[k,j,i], ym[k,j,i], zm[k,j,i] ] for i,j,k in product(range(n),range(n), range(n)) ]
+           points = np.stack((xm,ym,zm), axis = -1).reshape((-1,3))
+           # points = [ [xm[k,j,i], ym[k,j,i], zm[k,j,i] ] for i,j,k in product(range(n),range(n), range(n)) ]
            cells_test = []
            for fila in range(n-1):
             for k in range(n*n):
