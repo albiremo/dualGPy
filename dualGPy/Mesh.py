@@ -200,39 +200,27 @@ class Mesh2D(Mesh) :
         plt.tight_layout()
         plt.savefig(string, dpi = quality)
 
-    def draw_aggl_lines_full(self,string,lines_dict):
-     """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
-        input. This version is the one that plot the whole mesh.
-        :param string: string of the name of the figure produced
-        :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line"""
-     plt.figure()
-     plt.axis('equal')
-    ### cycle on the elements
-     for i,elemento in enumerate(self.cells):
-      ### cycle on the point of the elements
-         print(i)
-     #to print numero cell
-     #    if i<100:
-     #     print("true")
-     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
-         for i in range(len(elemento)):
-       ## # plot the grid
-           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
-           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
-           plt.plot(x_value,y_value,c='b')
-         #else:
-         # break
-     x_line = []
-     y_line = []
-     for key,value in lines_dict.items():
-         for cell in value:
-             x_line.append(self.centers[cell,0])
-             y_line.append(self.centers[cell,1])
-         plt.plot(x_line,y_line,linewidth=2.0,c='r')
-         x_line = []
-         y_line = []
-     ##draw the adjacency graph
-     plt.savefig(string)
+    def draw_aggl_lines_full(self,string,lines_dict,show_axes = True):
+        """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
+           input. This version is the one that plot the whole mesh.
+           :param string: string of the name of the figure produced
+           :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line
+           :param show_axes: whether to show plot axes in the drawing, default = True
+           """
+        plt.figure()
+        # Draw cells
+        for c in self.cells:
+            plt.fill(self.mesh.points[c,0],self.mesh.points[c,1],
+                     edgecolor='b',facecolor='w')
+        # Draw lines joining centers of the anisotropic cells
+        for aniso_cells in lines_dict.values():
+            plt.plot(self.centers[aniso_cells,0],self.centers[aniso_cells,1],
+                     linewidth=2.0,c='r')
+        if not show_axes:
+            plt.gca().axis('off')
+            plt.savefig(string, bbox_inches='tight', pad_inches=0)
+        else:
+            plt.savefig(string)
 
     def draw_bnd(self,string,vector):
      """Draw the mesh and the priority boundaries (for the agglomeration)
@@ -261,45 +249,38 @@ class Mesh2D(Mesh) :
      ##draw the adjacency graph
      plt.savefig(string)
 
-
-
-    def draw_aggl_lines(self,string,lines_dict,xlim_min,xlim_max,ylim_min,ylim_max):
-     """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
-        input. This version is the one that plot a window on the mesh.
-        :param string: string of the name of the figure produced
-        :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line
-        :param xlim_min: minimum x to plot
-        :param xlim_max: maximum x to plot
-        :param ylim_min: minimum y to plot
-        :param ylim_max: maximum y to plot"""
-     plt.figure()
-    ### cycle on the elements
-     for i,elemento in enumerate(self.cells):
-      ### cycle on the point of the elements
-         print(i)
-     #to print numero cell
-     #    if i<100:
-     #     print("true")
-     #     plt.text(self.centers[i][0],self.centers[i][1], i, fontsize = 10)
-         for i in range(len(elemento)):
-       ## # plot the grid
-           x_value = [self.mesh.points[elemento[i-1],0],self.mesh.points[elemento[i],0]]
-           y_value = [self.mesh.points[elemento[i-1],1],self.mesh.points[elemento[i],1]]
-           plt.plot(x_value,y_value,c='b')
-         #else:
-         # break
-     x_line = []
-     y_line = []
-     for key,value in lines_dict.items():
-         for cell in value:
-             x_line.append(self.centers[cell,0])
-             y_line.append(self.centers[cell,1])
-         plt.plot(x_line,y_line,linewidth=2.0,c='r')
-         x_line = []
-         y_line = []
-     x1,x2,y1,y2 = plt.axis()
-     plt.axis((xlim_min,xlim_max,ylim_min,ylim_max))
-     plt.savefig(string)
+    def draw_aggl_lines(self,string,lines_dict,xlim_min,xlim_max,ylim_min,ylim_max,show_axes = True):
+        """Draw the mesh and the agglomeration lines that are defined in a dictionary given as an
+           input. This version is the one that plot a window on the mesh.
+           :param string: string of the name of the figure produced
+           :param lines_dict: dictionary where the key is the number of the line and the value is a list of the cells representing this line
+           :param xlim_min: minimum x to plot
+           :param xlim_max: maximum x to plot
+           :param ylim_min: minimum y to plot
+           :param ylim_max: maximum y to plot
+           :param show_axes: whether to show plot axes in the drawing, default = True
+           """
+        plt.figure()
+        # Draw cells
+        for c in self.cells:
+           # only if in bounds
+           if (self.mesh.points[c,0].min() < xlim_max or self.mesh.points[c,0].max() > xlim_min) and \
+              (self.mesh.points[c,1].min() < ylim_max or self.mesh.points[c,1].max() > ylim_min):
+               plt.fill(self.mesh.points[c,0],self.mesh.points[c,1],
+                        edgecolor='b',facecolor='w')
+        # Draw lines joining centers of the anisotropic cells
+        for aniso_cells in lines_dict.values():
+           # only if in bounds
+           if (self.centers[aniso_cells,0].min() < xlim_max or self.centers[aniso_cells,0].max() > xlim_min) and \
+              (self.centers[aniso_cells,1].min() < ylim_max or self.centers[aniso_cells,1].max() > ylim_min):
+               plt.plot(self.centers[aniso_cells,0],self.centers[aniso_cells,1],
+                        linewidth=2.0,c='r')
+        plt.axis((xlim_min,xlim_max,ylim_min,ylim_max))
+        if not show_axes:
+            plt.gca().axis('off')
+            plt.savefig(string, bbox_inches='tight', pad_inches=0)
+        else:
+            plt.savefig(string)
 
 
     def ComputeGeometry(self):
@@ -531,6 +512,3 @@ class Mesh3D(Mesh):
             self.boundary_cells.append(np.int(num_boundaries))
          else:
             self.boundary_cells.append(np.int(num_boundaries))
-
-
-
