@@ -184,7 +184,7 @@ class Mesh2D(Mesh) :
             lab = 'facecolor'
         else:
             lab = 'color'
-        kw[lab] = 'w'
+        kw[lab] = (0.,0.,0.,0.)
 
         for c,elemento in enumerate(self.cells):
             if data is not None:
@@ -211,7 +211,7 @@ class Mesh2D(Mesh) :
         # Draw cells
         for c in self.cells:
             plt.fill(self.mesh.points[c,0],self.mesh.points[c,1],
-                     edgecolor='b',facecolor='w')
+                     edgecolor='b',facecolor=(0.,0.,0.,0.))
         # Draw lines joining centers of the anisotropic cells
         for aniso_cells in lines_dict.values():
             plt.plot(self.centers[aniso_cells,0],self.centers[aniso_cells,1],
@@ -267,7 +267,7 @@ class Mesh2D(Mesh) :
            if (self.mesh.points[c,0].min() < xlim_max or self.mesh.points[c,0].max() > xlim_min) and \
               (self.mesh.points[c,1].min() < ylim_max or self.mesh.points[c,1].max() > ylim_min):
                plt.fill(self.mesh.points[c,0],self.mesh.points[c,1],
-                        edgecolor='b',facecolor='w')
+                        edgecolor='b',facecolor=(0.,0.,0.,0.))
         # Draw lines joining centers of the anisotropic cells
         for aniso_cells in lines_dict.values():
            # only if in bounds
