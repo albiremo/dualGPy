@@ -304,13 +304,7 @@ class Mesh2D(Mesh) :
       # in that way we can determine the number of missing connections that are the one on the boundary
       for k,v in self.connectivity.items():
          connections = len(v)
-
-         if (self.cell_type[k]==3):
-            # case of triangle
-            num_boundaries = 3-connections
-         else:
-            # case of square
-            num_boundaries = 4-connections
+         num_boundaries = self.cell_type[k]-connections
          if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
             self.boundary_cells.append(np.int(num_boundaries))
