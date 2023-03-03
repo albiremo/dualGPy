@@ -471,12 +471,17 @@ class Mesh3D(Mesh):
         # cycle on the cells
         for i,cell in enumerate(self.cells):
         # applying shoelace formula
+            if len(cell) < 4:
+                # Probably a 2D element, skipping
+                continue
             if len(cell) == 4:
                cella = Tetra(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
             elif len(cell) == 6:
                cella = Wedge(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
-            else:
+            elif len(cell) == 8:
                cella = Hexa(self.mesh.points[cell, :],self.mesh.points,self.faces[i])
+            else:
+                raise ValueError(f"Unknown 3D element with {len(cell)} vertices (only Tetra, Wedge and Hexa supported)")
             cella.ComputeArea()
             cella.ComputeVolume()
             self.volume.append(cella.volume)
