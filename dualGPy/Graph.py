@@ -6,8 +6,7 @@ import networkx as nx
 from dualGPy import Utils as ut
 class Graph(abc.ABC):
     """Base class for the Graph2D and Graph3D representation.
-     WARNING! 2D and 3D are considered from a geometric point of
-     view:
+     WARNING! 2D and 3D are considered from a geometric point of view:
 
      mesh : dualGPy mesh representation
     """
@@ -16,7 +15,7 @@ class Graph(abc.ABC):
      self.graph={}
      self.nx_graph = nx.Graph(self.mesh.connectivity)
      self.edges = []
-     self.vertex = [0]
+     self.vertex = []
      self.weight = []
 
     @abc.abstractmethod
@@ -24,24 +23,19 @@ class Graph(abc.ABC):
      raise NotImplementedError
 
     def adj_to_csr(self):
-     """Parsing the adjacency matrix in numpy in a CSR (Compressed Sparse Row) representation
-     Parameters:
-
-     adj : Adjacency matrix
-
-     """
+     """Build the adjacency matrix via `networkx` and parse it in a CSR (Compressed Sparse Row) representation"""
      # the CSR representation is built starting from the definition, hence
      # we cycle over the adjacency matrix, we identify the non zero entry
      # and finally we fill the vertex vector with the position where we find the
      # non zero elements in the edges vector. We hence fill the edges vector at the same
      # way
+
      # numpy adjacency matrix
      adj = nx.to_numpy_array(self.nx_graph, nodelist=range(len(self.mesh.cells)))
      non_zero = np.count_nonzero(adj,axis=1)
-     for i,e in enumerate(adj[:,1]):
-       print(i)
+     for i in range(len(adj[:,1])):
        self.vertex.append(np.sum(non_zero[:i]))
-       for j,f in enumerate(adj[i,:]):
+       for j in range(len(adj[i,:])):
            if adj[i,j]!=0:
             self.edges.append(j)
      self.vertex.append(np.sum(np.count_nonzero(adj)))
@@ -52,8 +46,8 @@ class Graph2D(Graph):
         super().__init__(mesh)
 
     def get_CSR(self):
-     edges = []
-     vertex = []
+     """Build a CSR representation of the graph"""
+     self.vertex.append(0)
      somma = 0
      # Initialize the keys of the graph dictionary
      # cycle on the points
