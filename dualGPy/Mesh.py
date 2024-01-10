@@ -307,15 +307,15 @@ class Mesh2D(Mesh) :
          num_boundaries = self.cell_type[k]-connections
          if (num_boundaries==CellType.VALLEY):
             self.onValley.append(k)
-            self.boundary_cells.append(np.int(num_boundaries))
+            self.boundary_cells.append(int(num_boundaries))
          elif ((num_boundaries) == CellType.RIDGE):
             self.onRidge.append(k)
-            self.boundary_cells.append(np.int(num_boundaries))
+            self.boundary_cells.append(int(num_boundaries))
          elif ((num_boundaries) >= CellType.CORNER):
             self.onCorner.append(k)
-            self.boundary_cells.append(np.int(num_boundaries))
+            self.boundary_cells.append(int(num_boundaries))
          else:
-            self.boundary_cells.append(np.int(num_boundaries))
+            self.boundary_cells.append(int(num_boundaries))
 
     def get_boundary_faces(self):
      """ Specific implementation of the abstract method in :class:`Mesh`."""
