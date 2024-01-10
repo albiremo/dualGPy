@@ -1,5 +1,5 @@
 import numpy as np
-from collections import defaultdict,Counter
+from collections import Counter
 
 # right now this tool is intended for square meshes.
 class Coarse_mesh:
@@ -15,9 +15,6 @@ class Coarse_mesh:
             if x not in d:
                d.update({x:[]})
             d[x].append(i)
-        # quad and polyg6
-        quad = []
-        polyg6 =[]
         # vector of the points for the agglomerated cells. We need to define the agglomerated points reordered as far we are going to get rid of a particular set of points.
         agglomerated_points = []
         #new cell index based on the order of the points

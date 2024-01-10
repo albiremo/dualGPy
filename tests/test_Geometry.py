@@ -1,9 +1,9 @@
 import sys
 import os
-sys.path.append(os.path.abspath('../'))
-from dualGPy.Utils import *
-from dualGPy.Geometry import Face3D,Hexa,Tetra,Wedge
 import numpy as np
+sys.path.append(os.path.abspath('../'))
+from dualGPy.Utils import *  # noqa: E402
+from dualGPy.Geometry import Face3D,Hexa,Tetra,Wedge  # noqa: E402
 class Test3D:
     def test_square(self):
         points =  np.array([[0,0,0],[1,0,0],[1,1,0],[0,1,0]])
@@ -50,4 +50,4 @@ class Test3D:
         cella = Wedge(c_points,c_points,faces)
         cella.ComputeVolume()
         assert(cella.volume==0.5) #1/3*A0*h
-        
+

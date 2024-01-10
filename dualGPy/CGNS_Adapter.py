@@ -2,7 +2,7 @@ import CGNS.MAP as CGM
 import CGNS.PAT.cgnsclass as CGC
 import CGNS.PAT.cgnskeywords as CGK
 import CGNS.PAT.cgnsutils as CGU
-import CGNS.PAT.cgnslib as CGL
+# import CGNS.PAT.cgnslib as CGL
 import numpy as np
 
 class CGNS_Adapter:
@@ -57,7 +57,7 @@ class CGNS_Adapter:
   for n_base in n_tree.nextChild(sidstype=CGK.CGNSBase_ts):
         for n_zone in n_base.nextChild(sidstype=CGK.Zone_ts):
                x,y,z = self.initialize_coordinates(n_zone.node)
-               ngon_node = self.get_NGon_Node(n_zone).node
+               # ngon_node = self.get_NGon_Node(n_zone).node
                elem_range, element_connectivity_array, parent_elem = self.get_ngon_a_from_zone_node(n_zone)
                # we need to define the faces. The CGNS format ngon define as a first index
                # the number of vertices and subsequently the vertices hence we define

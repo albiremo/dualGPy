@@ -1,9 +1,8 @@
 import abc
-import mypy
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-from dualGPy import Utils as ut
+
 class Graph(abc.ABC):
     """Base class for the Graph2D and Graph3D representation.
      WARNING! 2D and 3D are considered from a geometric point of
@@ -52,8 +51,6 @@ class Graph2D(Graph):
         super().__init__(mesh)
 
     def get_CSR(self):
-     edges = []
-     vertex = []
      somma = 0
      # Initialize the keys of the graph dictionary
      # cycle on the points
@@ -61,7 +58,6 @@ class Graph2D(Graph):
         self.edges.extend(self.mesh.connectivity[key])
         somma += len(self.mesh.connectivity[key])
         self.vertex.append(somma)
-
 
 
     def draw_graph(self, string, mesh = None):

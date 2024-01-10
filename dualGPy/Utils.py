@@ -1,6 +1,5 @@
 import numpy as np
-from numba import njit, prange
-from collections import defaultdict
+from numba import njit
 
 
 def dict_of_indices(a):

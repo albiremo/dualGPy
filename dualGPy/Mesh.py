@@ -1,15 +1,10 @@
 import abc
 import meshio
-import mypy
 import matplotlib.pyplot as plt
 import numpy as np
-import itertools
-import time
 from dualGPy import Utils as ut
 from dualGPy.Geometry import Face2D,Tetra,Hexa,Wedge
-from dualGPy.Graph import Graph2D
-from collections import defaultdict
-from itertools import product,permutations,combinations
+from itertools import product,permutations
 from enum import IntEnum
 
 class CellType(IntEnum):

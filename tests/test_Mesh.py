@@ -1,10 +1,11 @@
 import sys
 import os
-sys.path.append(os.path.abspath('../'))
-from dualGPy.Utils import *
-from dualGPy.Mesh import Mesh2D, Mesh3D
 import numpy as np
-from meshio import Mesh
+import meshio
+
+sys.path.append(os.path.abspath('../'))
+from dualGPy.Utils import *  # noqa: E402
+from dualGPy.Mesh import Mesh2D, Mesh3D  # noqa: E402
 
 class Test2D:
     def test_one(self):
@@ -38,7 +39,7 @@ class Test2D:
             'quad':     [[0,1,4,5], [1,2,3,4]],
             'triangle': [[4,5,6],   [3,4,6]]
             }
-        base_mesh = Mesh(points = points, cells = cells)
+        base_mesh = meshio.Mesh(points = points, cells = cells)
         mesh = Mesh2D(base_mesh)
         mesh.get_boundary_faces()
         mesh.ComputeGeometry()
@@ -67,7 +68,7 @@ class Test3D:
             [dx    , Ly    , Lz], # idx = 7
             ], dtype = float)
         cells = [('hexahedron', [[0,1,2,3,4,5,6,7]])]
-        base_mesh = Mesh(points = points, cells = cells)
+        base_mesh = meshio.Mesh(points = points, cells = cells)
         mesh = Mesh3D(base_mesh)
         # Since we are working with only one cell, we have to give it the faces ourselves
         mesh.faces[0] = [ [0,1,2,3], [0,1,5,4], [0,3,4,7] ]
@@ -97,7 +98,7 @@ class Test3D:
         'hexahedron': [[0,1,2,3,4,5,6,7], [4,5,6,7,8,9,10,11]],
         'tetra'     : [[8,9,11,12], [9,10,11,12]]
         }
-        base_mesh = Mesh(points = points, cells = cells)
+        base_mesh = meshio.Mesh(points = points, cells = cells)
         mesh = Mesh3D(base_mesh)
         mesh.get_boundary_faces()
         # Since the algorithm store only internal faces, we should manually add some faces for the parallelograms

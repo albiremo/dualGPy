@@ -1,6 +1,6 @@
 import abc
 import numpy as np
-from numba import njit, prange
+from numba import njit
 import dualGPy.Utils as ut
 import itertools
 
